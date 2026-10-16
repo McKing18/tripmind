@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripMind | vnutreniy-kontur.ru</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=532e29b4-842c-43c7-90d5-f6b3f9dff1d3&lang=ru_RU"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f0f0f5;overflow-x:hidden}
+        .container{max-width:1280px;margin:0 auto;padding:0 1rem}
+        @media(min-width:640px){.container{padding:0 1.5rem}}
+        nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(26,26,46,0.85);backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,0.05)}
+        nav .container{display:flex;align-items:center;justify-content:space-between;height:64px}
+        .logo{font-weight:700;font-size:1.125rem;color:#f0f0f5;text-decoration:none;cursor:pointer}
+        .logo:hover{color:#00f5d4}
+        .nav-links{display:none;gap:.25rem}
+        @media(min-width:768px){.nav-links{display:flex}}
+        .nav-links a{padding:.5rem .75rem;border-radius:.5rem;font-size:.875rem;color:#9ca3af;text-decoration:none;cursor:pointer}
+        .nav-links a:hover,.nav-links a.active{color:#00f5d4;background:rgba(0,245,212,0.1)}
+        .burger{display:flex;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none}
+        .burger span{display:block;width:22px;height:2px;background:#f0f0f5;border-radius:2px;transition:all .3s}
+        .burger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+        .burger.open span:nth-child(2){opacity:0}
+        .burger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+        @media(min-width:768px){.burger{display:none}}
+        .mobile-menu{display:none;position:fixed;top:64px;left:0;right:0;background:rgba(26,26,46,0.95);backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,0.05);padding:1rem;z-index:49}
+        .mobile-menu.open{display:block}
+        .mobile-menu a{display:block;padding:.75rem 1rem;border-radius:.5rem;color:#9ca3af;text-decoration:none;cursor:pointer;margin-bottom:.25rem}
+        .mobile-menu a:hover,.mobile-menu a.active{color:#00f5d4;background:rgba(0,245,212,0.1)}
+        @media(min-width:768px){.mobile-menu{display:none!important}}
+        .btn-primary{background:linear-gradient(135deg,#00f5d4,#00b4d8);color:#0a0a0f;font-weight:600;padding:12px 28px;border-radius:12px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:all .3s}
+        .btn-primary:hover{box-shadow:0 0 30px rgba(0,245,212,0.4);transform:translateY(-1px)}
+        .btn-secondary{background:rgba(255,255,255,0.05);border:1px solid rgba(0,245,212,0.3);color:#00f5d4;font-weight:500;padding:12px 28px;border-radius:12px;cursor:pointer;text-decoration:none;display:inline-block}
+        .btn-secondary:hover{background:rgba(0,245,212,0.1);border-color:rgba(0,245,212,0.6)}
+        .btn-small{padding:8px 16px;font-size:.875rem}
+        .gradient-text{background:linear-gradient(135deg,#00f5d4,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .page{display:none;padding-top:80px;min-height:100vh}
+        .page.active{display:block}
+        .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,245,212,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(179,136,255,0.05) 0%,transparent 40%)}
+        .hero-content{position:relative;z-index:10;max-width:64rem;padding:0 1rem}
+        .hero h1{font-size:3rem;font-weight:900;margin-bottom:1.5rem}
+        @media(min-width:640px){.hero h1{font-size:4.5rem}}
+        @media(min-width:1024px){.hero h1{font-size:6rem}}
+        .hero p{font-size:1.125rem;color:#9ca3af;margin-bottom:2.5rem;max-width:42rem;margin-left:auto;margin-right:auto}
+        .hero-buttons{display:flex;flex-direction:column;gap:1rem;justify-content:center}
+        @media(min-width:640px){.hero-buttons{flex-direction:row}}
+        section{padding:4rem 1rem}
+        .section-title{font-size:2rem;font-weight:700;margin-bottom:1rem;text-align:center}
+        .section-subtitle{color:#9ca3af;text-align:center;margin-bottom:3rem}
+        .grid{display:grid;gap:1.5rem}
+        .grid-3{grid-template-columns:1fr}
+        @media(min-width:640px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+        @media(min-width:1024px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+        .card{background:rgba(26,26,46,0.6);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;transition:all .3s}
+        .card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,245,212,0.1);border-color:rgba(0,245,212,0.3)}
+        .card-clickable{cursor:pointer}
+        .glass-panel{background:rgba(26,26,46,0.6);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem}
+        @media(min-width:640px){.glass-panel{padding:2rem}}
+        .form-group{margin-bottom:1.5rem}
+        .form-group label{display:block;font-size:.875rem;color:#9ca3af;margin-bottom:.5rem}
+        .form-group input,.form-group select{width:100%;padding:.75rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:.75rem;color:#f0f0f5;font-size:1rem}
+        .form-group input:focus,.form-group select:focus{outline:none;border-color:#00f5d4}
+        .form-group select option{background:#1a1a2e;color:#f0f0f5}
+        input[type="range"]{accent-color:#00f5d4;width:100%}
+        .map-container{border-radius:1rem;overflow:hidden;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 100%);border:2px solid rgba(0,245,212,0.3);box-shadow:0 0 30px rgba(0,245,212,0.15);padding:4px}
+        .map-inner{width:100%;height:400px;border-radius:.75rem;overflow:hidden}
+        footer{border-top:1px solid rgba(255,255,255,0.05);padding:2rem 1rem;text-align:center;color:#6b7280;font-size:.875rem}
+        footer a{color:#00f5d4;text-decoration:none}
+        .hidden{display:none!important}
+        .modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:1rem}
+        .modal.active{display:flex}
+        .modal-content{background:#1a1a2e;border:1px solid rgba(0,245,212,0.3);border-radius:16px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto}
+        .modal-header{padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center}
+        .modal-close{background:none;border:none;color:#9ca3af;font-size:1.5rem;cursor:pointer}
+        .modal-close:hover{color:#00f5d4}
+        .modal-body{padding:1.5rem}
+        .day-card{margin-bottom:1rem;padding:1rem;background:rgba(255,255,255,0.03);border-radius:.75rem;border-left:3px solid #00f5d4}
+        .stop-item{padding:.75rem 0;border-left:2px solid rgba(0,245,212,0.3);padding-left:1rem;margin-left:.5rem;margin-top:.5rem}
+        .stop-actions{display:flex;gap:.5rem;margin-top:.5rem}
+        .stop-actions button{padding:4px 10px;font-size:.75rem;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#9ca3af}
+        .stop-actions button:hover{background:rgba(0,245,212,0.1);border-color:rgba(0,245,212,0.3);color:#00f5d4}
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a class="logo" onclick="showPage('home')">🧠 TripMind</a>
+            <div class="nav-links">
+                <a onclick="showPage('home')" class="active" data-page="home">🏠 Главная</a>
+                <a onclick="showPage('places')" data-page="places">🗺️ Направления</a>
+                <a onclick="showPage('builder')" data-page="builder">🛤️ Конструктор</a>
+                <a onclick="showPage('map')" data-page="map">📍 Карта</a>
+                <a onclick="showPage('about')" data-page="about">ℹ️ О проекте</a>
+            </div>
+            <button class="burger" id="burger-btn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+    <div class="mobile-menu" id="mobile-menu">
+        <a onclick="showPage('home');closeMobile()" class="active" data-page="home">🏠 Главная</a>
+        <a onclick="showPage('places');closeMobile()" data-page="places">🗺️ Направления</a>
+        <a onclick="showPage('builder');closeMobile()" data-page="builder">🛤️ Конструктор</a>
+        <a onclick="showPage('map');closeMobile()" data-page="map">📍 Карта</a>
+        <a onclick="showPage('about');closeMobile()" data-page="about">ℹ️ О проекте</a>
+    </div>
+
+    <div id="page-home" class="page active">
+        <div class="hero">
+            <div class="hero-content">
+                <h1><span class="gradient-text">Trip</span><span>Mind</span></h1>
+                <p>AI-планировщик путешествий по России. Бесплатные AI-модели, маршруты по реальным дорогам с Яндекс Картами.</p>
+                <div class="hero-buttons">
+                    <button class="btn-primary" onclick="showPage('builder')">🧭 Собрать маршрут</button>
+                    <button class="btn-secondary" onclick="showPage('places')">🗺️ Направления</button>
+                </div>
+            </div>
+        </div>
+        <section>
+            <div class="container">
+                <h2 class="section-title">Возможности TripMind</h2>
+                <p class="section-subtitle">Бесплатный AI-планировщик с поддержкой множества провайдеров</p>
+                <div class="grid grid-3">
+                    <div class="card"><div style="font-size:2rem;margin-bottom:1rem">🤖</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Бесплатные AI</h3><p style="color:#9ca3af;font-size:.875rem">DeepSeek, бесплатные GPT и Claude модели без необходимости API-ключей</p></div>
+                    <div class="card"><div style="font-size:2rem;margin-bottom:1rem">🗺️</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Яндекс Карты</h3><p style="color:#9ca3af;font-size:.875rem">Маршруты по реальным дорогам с интерактивной картой</p></div>
+                    <div class="card"><div style="font-size:2rem;margin-bottom:1rem">⚡</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">Динамическое перестроение</h3><p style="color:#9ca3af;font-size:.875rem">Меняйте порядок точек, удаляйте места — маршрут пересчитывается мгновенно</p></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="page-places" class="page">
+        <div class="container" style="padding-top:2rem;padding-bottom:3rem">
+            <h1 style="font-size:2rem;font-weight:700;margin-bottom:1rem">Направления</h1>
+            <p style="color:#9ca3af;margin-bottom:2rem">Популярные локации России — от Карелии до Камчатки</p>
+            <div style="margin-bottom:2rem"><input type="text" id="search-places" placeholder="Поиск по местам..." style="width:100%;padding:.75rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:.75rem;color:#f0f0f5"></div>
+            <div id="places-grid" class="grid grid-3"></div>
+        </div>
+    </div>
+
+    <div id="page-builder" class="page">
+        <div class="container" style="padding-top:2rem;padding-bottom:3rem;max-width:900px">
+            <h1 style="font-size:2rem;font-weight:700;margin-bottom:.5rem;text-align:center">Соберите свой контур</h1>
+            <p style="color:#9ca3af;margin-bottom:2rem;text-align:center">AI-мастер маршрутов с бесплатными моделями</p>
+            <div id="builder-form" class="glass-panel">
+                <div class="form-group"><label>📍 Куда едем?</label><select id="input-region"><option value="">Все регионы (удиви меня)</option></select></div>
+                <div class="form-group"><label>📅 Дата начала</label><input type="date" id="input-date"></div>
+                <div class="form-group"><label>🗓️ Количество дней: <span id="days-value">3</span></label><input type="range" id="input-days" min="1" max="14" value="3"></div>
+                <div class="form-group"><label>⚡ Темп</label><select id="input-pace"><option value="relaxed">🐢 Спокойный (2 точки/день)</option><option value="normal" selected>🚶 Средний (3 точки/день)</option><option value="intensive">🏃 Насыщенный (5 точек/день)</option></select></div>
+                <div class="form-group"><label>❤️ Что интересно?</label><div id="interests-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem"></div></div>
+                <div class="form-group"><label>💰 Бюджет</label><select id="input-budget"><option value="low">💰 Эконом</option><option value="medium" selected>💰💰 Средний</option><option value="high">💰💰💰 Премиум</option></select></div>
+                <div class="form-group"><label>🚗 Транспорт</label><select id="input-transport"><option value="car" selected>🚗 Авто</option><option value="walk">🚶 Пешком</option><option value="public">🚌 Общ. транспорт</option></select></div>
+                <button class="btn-primary" style="width:100%;margin-top:1rem" onclick="generateRoute()">✨ Сгенерировать маршрут</button>
+            </div>
+            <div id="route-result" class="hidden" style="margin-top:2rem">
+                <div class="glass-panel" style="margin-bottom:1.5rem">
+                    <h2 id="result-title" style="font-size:1.5rem;font-weight:700;margin-bottom:.5rem"></h2>
+                    <p id="result-overview" style="color:#9ca3af;margin-bottom:1rem"></p>
+                    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+                        <div style="background:rgba(0,245,212,0.1);padding:.5rem 1rem;border-radius:.5rem"><span style="color:#00f5d4;font-weight:700" id="result-score"></span><span style="color:#9ca3af;font-size:.875rem"> совпадение</span></div>
+                        <div style="background:rgba(179,136,255,0.1);padding:.5rem 1rem;border-radius:.5rem"><span style="color:#b388ff;font-weight:700" id="result-stops"></span><span style="color:#9ca3af;font-size:.875rem"> точек</span></div>
+                        <div style="background:rgba(255,179,0,0.1);padding:.5rem 1rem;border-radius:.5rem"><span style="color:#ffb300;font-weight:700" id="result-distance"></span><span style="color:#9ca3af;font-size:.875rem"> км</span></div>
+                    </div>
+                </div>
+                <div class="map-container" style="margin-bottom:1.5rem"><div id="result-map" class="map-inner"></div></div>
+                <div id="result-timeline" class="glass-panel" style="margin-bottom:1.5rem"></div>
+                <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center">
+                    <a id="open-yandex" href="#" target="_blank" class="btn-primary">🗺️ Яндекс Карты</a>
+                    <button class="btn-secondary" onclick="resetBuilder()">🔄 Перестроить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-map" class="page">
+        <div class="container" style="padding-top:2rem;padding-bottom:3rem">
+            <h1 style="font-size:2rem;font-weight:700;margin-bottom:1rem">Карта России</h1>
+            <p style="color:#9ca3af;margin-bottom:2rem">Все локации на одной карте</p>
+            <div class="map-container"><div id="main-map" class="map-inner" style="height:600px"></div></div>
+        </div>
+    </div>
+
+    <div id="page-about" class="page">
+        <div class="container" style="padding-top:2rem;padding-bottom:3rem;max-width:800px">
+            <h1 style="font-size:2rem;font-weight:700;margin-bottom:2rem">О проекте TripMind</h1>
+            <div class="glass-panel" style="margin-bottom:1.5rem"><h2 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem">🧠 Миссия</h2><p style="color:#9ca3af">TripMind — бесплатный AI-планировщик путешествий по России с поддержкой DeepSeek и других бесплатных моделей.</p></div>
+            <div class="glass-panel"><h2 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem">🤖 Бесплатные AI-модели</h2><ul style="color:#9ca3af;padding-left:1.5rem;line-height:2"><li>DeepSeek — мощная бесплатная модель</li><li>Бесплатные GPT и Claude через прокси</li><li>Offline режим для мгновенной генерации</li></ul></div>
+        </div>
+    </div>
+
+    <div id="place-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modal-title" style="font-size:1.25rem;font-weight:700"></h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+            <div class="modal-body">
+                <div id="modal-info" style="margin-bottom:1rem;color:#9ca3af"></div>
+                <div class="map-container"><div id="modal-map" class="map-inner"></div></div>
+                <div style="margin-top:1rem;text-align:center"><a id="modal-yandex-link" href="#" target="_blank" class="btn-secondary">🗺️ Открыть в Яндекс Картах</a></div>
+            </div>
+        </div>
+    </div>
+
+    <footer><div class="container"><p>© 2026 <a href="http://vnutreniy-kontur.ru/">TripMind</a>. Демо-данные могут быть не актуальны.</p><p style="margin-top:.5rem">Сделано с ❤️ для путешественников по России</p></div></footer>
+
+<script>
+const regions=[
+    {id:'r1',name:'Карелия',slug:'karelia'},
+    {id:'r2',name:'Алтай',slug:'altai'},
+    {id:'r3',name:'Байкал',slug:'baikal'},
+    {id:'r4',name:'Камчатка',slug:'kamchatka'},
+    {id:'r5',name:'Краснодарский край',slug:'krasnodar'},
+    {id:'r6',name:'Крым',slug:'crimea'},
+    {id:'r7',name:'Золотое кольцо',slug:'golden-ring'},
+    {id:'r8',name:'Санкт-Петербург',slug:'spb'},
+    {id:'r9',name:'Казань',slug:'tatarstan'},
+    {id:'r10',name:'Москва',slug:'moscow'},
+    {id:'r11',name:'Урал',slug:'ural'},
+    {id:'r12',name:'Дагестан',slug:'dagestan'},
+    {id:'r13',name:'Мурманская область',slug:'murmansk'},
+    {id:'r14',name:'Нижегородская область',slug:'nizhny'},
+    {id:'r15',name:'Сахалин',slug:'sakhalin'},
+    {id:'r16',name:'Якутия',slug:'yakutia'},
+    {id:'r17',name:'Калининград',slug:'kaliningrad'},
+    {id:'r18',name:'Владивосток',slug:'vladivostok'},
+    {id:'r19',name:'Сочи',slug:'sochi'},
+    {id:'r20',name:'Псковская область',slug:'pskov'}
+];
+
+const places=[
+    // Карелия
+    {id:'p1',name:'Остров Кижи',regionId:'r1',city:'Петрозаводск',lat:62.07,lon:35.17,cat:'history',tags:['юнеско','зодчество'],budget:'medium',featured:true},
+    {id:'p2',name:'Рускеала',regionId:'r1',city:'Сортавала',lat:61.83,lon:30.63,cat:'nature',tags:['каньон','мрамор'],budget:'low',featured:true},
+    {id:'p3',name:'Водопад Кивач',regionId:'r1',city:'Петрозаводск',lat:62.28,lon:33.99,cat:'nature',tags:['водопад'],budget:'low',featured:true},
+
+    // Алтай
+    {id:'p4',name:'Чемальская ГЭС',regionId:'r2',city:'Чемал',lat:51.32,lon:85.58,cat:'nature',tags:['гэс','река'],budget:'low',featured:true},
+    {id:'p5',name:'Мультинские озёра',regionId:'r2',city:'Усть-Кан',lat:50.9,lon:85.8,cat:'nature',tags:['озёра','горы'],budget:'low',featured:true},
+    {id:'p6',name:'Гора Белуха',regionId:'r2',city:'Усть-Кокса',lat:49.81,lon:86.59,cat:'nature',tags:['вершина','альпинизм'],budget:'high',featured:true},
+    {id:'p7',name:'Телецкое озеро',regionId:'r2',city:'Артыбаш',lat:51.63,lon:87.63,cat:'nature',tags:['озеро','юнеско'],budget:'medium',featured:true},
+
+    // Байкал
+    {id:'p8',name:'Остров Ольхон',regionId:'r3',city:'Иркутск',lat:53.1,lon:107.4,cat:'nature',tags:['остров','байкал'],budget:'medium',featured:true},
+    {id:'p9',name:'Листвянка',regionId:'r3',city:'Иркутск',lat:51.85,lon:104.85,cat:'food',tags:['омуль','байкал'],budget:'medium',featured:true},
+    {id:'p10',name:'Баргузинская долина',regionId:'r3',city:'Северобайкальск',lat:53.5,lon:108.5,cat:'nature',tags:['долина','горы'],budget:'low',featured:true},
+
+    // Камчатка
+    {id:'p11',name:'Долина гейзеров',regionId:'r4',city:'Петропавловск',lat:54.46,lon:159.97,cat:'nature',tags:['гейзеры','юнеско'],budget:'high',featured:true},
+    {id:'p12',name:'Вулкан Ключевская Сопка',regionId:'r4',city:'Петропавловск',lat:56.06,lon:160.64,cat:'nature',tags:['вулкан','альпинизм'],budget:'high',featured:true},
+    {id:'p13',name:'Авачинская бухта',regionId:'r4',city:'Петропавловск',lat:53.03,lon:158.65,cat:'nature',tags:['бухта','море'],budget:'medium',featured:true},
+
+    // Краснодарский край
+    {id:'p14',name:'Роза Хутор',regionId:'r5',city:'Сочи',lat:43.67,lon:40.3,cat:'activity',tags:['горы','лыжи'],budget:'high',featured:true},
+    {id:'p15',name:'Абрау-Дюрсо',regionId:'r5',city:'Новороссийск',lat:44.66,lon:37.87,cat:'food',tags:['вино','озеро'],budget:'medium',featured:true},
+    {id:'p16',name:'Гуамское ущелье',regionId:'r5',city:'Краснодар',lat:44.5,lon:39.5,cat:'nature',tags:['ущелье','каньон'],budget:'low',featured:true},
+
+    // Крым
+    {id:'p17',name:'Ливадийский дворец',regionId:'r6',city:'Ялта',lat:44.47,lon:34.12,cat:'architecture',tags:['дворец','история'],budget:'low',featured:true},
+    {id:'p18',name:'Гора Ай-Петри',regionId:'r6',city:'Ялта',lat:44.46,lon:34.05,cat:'viewpoint',tags:['канатка','горы'],budget:'low',featured:true},
+    {id:'p19',name:'Херсонес Таврический',regionId:'r6',city:'Севастополь',lat:44.61,lon:33.53,cat:'history',tags:['юнеско','руины'],budget:'low',featured:true},
+    {id:'p20',name:'Генуэзская крепость',regionId:'r6',city:'Судак',lat:44.85,lon:34.96,cat:'history',tags:['крепость','средневековье'],budget:'low',featured:true},
+
+    // Золотое кольцо
+    {id:'p21',name:'Суздальский кремль',regionId:'r7',city:'Суздаль',lat:56.42,lon:40.45,cat:'history',tags:['кремль','юнеско'],budget:'low',featured:true},
+    {id:'p22',name:'Плещеево озеро',regionId:'r7',city:'Переславль',lat:56.75,lon:38.85,cat:'nature',tags:['озеро','история'],budget:'low',featured:true},
+    {id:'p23',name:'Ростовский кремль',regionId:'r7',city:'Ростов Великий',lat:57.18,lon:39.42,cat:'architecture',tags:['кремль','архитектура'],budget:'low',featured:true},
+    {id:'p24',name:'Троице-Сергиева Лавра',regionId:'r7',city:'Сергиев Посад',lat:56.31,lon:38.13,cat:'history',tags:['монастырь','юнеско'],budget:'low',featured:true},
+
+    // Санкт-Петербург
+    {id:'p25',name:'Эрмитаж',regionId:'r8',city:'Санкт-Петербург',lat:59.94,lon:30.31,cat:'museum',tags:['музей','юнеско'],budget:'medium',featured:true},
+    {id:'p26',name:'Петергоф',regionId:'r8',city:'Петергоф',lat:59.89,lon:29.92,cat:'architecture',tags:['фонтаны','дворец'],budget:'medium',featured:true},
+    {id:'p27',name:'Исаакиевский собор',regionId:'r8',city:'Санкт-Петербург',lat:59.93,lon:30.31,cat:'architecture',tags:['собор','колоннада'],budget:'low',featured:true},
+    {id:'p28',name:'Петропавловская крепость',regionId:'r8',city:'Санкт-Петербург',lat:59.95,lon:30.32,cat:'history',tags:['крепость','история'],budget:'low',featured:true},
+    {id:'p29',name:'Кронштадт',regionId:'r8',city:'Кронштадт',lat:60.0,lon:29.77,cat:'history',tags:['остров','форты'],budget:'low',featured:true},
+
+    // Казань
+    {id:'p30',name:'Казанский кремль',regionId:'r9',city:'Казань',lat:55.79,lon:49.11,cat:'history',tags:['кремль','юнеско'],budget:'low',featured:true},
+    {id:'p31',name:'Храм всех религий',regionId:'r9',city:'Казань',lat:55.73,lon:49.05,cat:'architecture',tags:['храм','уникальное'],budget:'low',featured:true},
+    {id:'p32',name:'Остров-град Свияжск',regionId:'r9',city:'Свияжск',lat:55.77,lon:48.66,cat:'history',tags:['остров','юнеско'],budget:'low',featured:true},
+
+    // Москва
+    {id:'p33',name:'Третьяковская галерея',regionId:'r10',city:'Москва',lat:55.74,lon:37.62,cat:'museum',tags:['искусство','галерея'],budget:'medium',featured:true},
+    {id:'p34',name:'Воробьёвы горы',regionId:'r10',city:'Москва',lat:55.71,lon:37.54,cat:'viewpoint',tags:['панорама','смотровая'],budget:'low',featured:true},
+    {id:'p35',name:'Красная площадь',regionId:'r10',city:'Москва',lat:55.75,lon:37.62,cat:'history',tags:['площадь','юнеско'],budget:'low',featured:true},
+    {id:'p36',name:'Парк Зарядье',regionId:'r10',city:'Москва',lat:55.75,lon:37.63,cat:'nature',tags:['парк','парящий мост'],budget:'low',featured:true},
+    {id:'p37',name:'Коломенское',regionId:'r10',city:'Москва',lat:55.67,lon:37.67,cat:'history',tags:['музей-заповедник','церковь'],budget:'low',featured:true},
+
+    // Урал
+    {id:'p38',name:'Таганай',regionId:'r11',city:'Челябинск',lat:55.45,lon:59.95,cat:'nature',tags:['скалы','трекинг'],budget:'low',featured:true},
+    {id:'p39',name:'Аркаим',regionId:'r11',city:'Челябинск',lat:52.65,lon:59.58,cat:'history',tags:['городище','археология'],budget:'low',featured:true},
+    {id:'p40',name:'Гора Народная',regionId:'r11',city:'Ханты-Мансийск',lat:62.0,lon:60.0,cat:'nature',tags:['вершина','урал'],budget:'high',featured:true},
+
+    // Дагестан
+    {id:'p41',name:'Сулакский каньон',regionId:'r12',city:'Махачкала',lat:42.65,lon:46.85,cat:'nature',tags:['каньон','река'],budget:'medium',featured:true},
+    {id:'p42',name:'Дербент',regionId:'r12',city:'Дербент',lat:42.07,lon:48.29,cat:'history',tags:['юнеско','крепость'],budget:'low',featured:true},
+    {id:'p43',name:'Гора Шалбуздаг',regionId:'r12',city:'Махачкала',lat:41.55,lon:48.33,cat:'nature',tags:['вершина','альпинизм'],budget:'high',featured:true},
+
+    // Мурманская область
+    {id:'p44',name:'Териберка',regionId:'r13',city:'Мурманск',lat:69.16,lon:35.13,cat:'nature',tags:['океан','край земли'],budget:'low',featured:true},
+    {id:'p45',name:'Ловозеро',regionId:'r13',city:'Ловозеро',lat:68.04,lon:35.03,cat:'nature',tags:['озеро','саамы'],budget:'medium',featured:true},
+    {id:'p46',name:'Хибины',regionId:'r13',city:'Кировск',lat:67.61,lon:33.67,cat:'nature',tags:['горы','лыжи'],budget:'medium',featured:true},
+
+    // Нижегородская область
+    {id:'p47',name:'Нижегородский кремль',regionId:'r14',city:'Нижний Новгород',lat:56.32,lon:44.0,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p48',name:'Большое Болдино',regionId:'r14',city:'Нижний Новгород',lat:56.5,lon:44.5,cat:'nature',tags:['деревня','деревянное зодчество'],budget:'low',featured:true},
+
+    // Сахалин
+    {id:'p49',name:'Мыс Великан',regionId:'r15',city:'Южно-Сахалинск',lat:46.5,lon:143.5,cat:'nature',tags:['мыс','океан'],budget:'high',featured:true},
+    {id:'p50',name:'Озеро Тунайча',regionId:'r15',city:'Южно-Сахалинск',lat:46.95,lon:142.75,cat:'nature',tags:['озеро','птицы'],budget:'medium',featured:true},
+
+    // Якутия
+    {id:'p51',name:'Полюс холода Оймякон',regionId:'r16',city:'Оймякон',lat:63.46,lon:142.77,cat:'nature',tags:['холод','уникальное'],budget:'high',featured:true},
+    {id:'p52',name:'Ленские столбы',regionId:'r16',city:'Якутск',lat:61.5,lon:127.0,cat:'nature',tags:['юнеско','скалы'],budget:'high',featured:true},
+
+    // Калининград
+    {id:'p53',name:'Куршская коса',regionId:'r17',city:'Калининград',lat:55.2,lon:20.9,cat:'nature',tags:['юнеско','коса','дюны'],budget:'medium',featured:true},
+    {id:'p54',name:'Кафедральный собор',regionId:'r7',city:'Калининград',lat:54.71,lon:20.51,cat:'architecture',tags:['собор','готика'],budget:'low',featured:true},
+
+    // Владивосток
+    {id:'p55',name:'Мост на остров Русский',regionId:'r18',city:'Владивосток',lat:43.0,lon:131.9,cat:'architecture',tags:['мост','современное'],budget:'low',featured:true},
+    {id:'p56',name:'Бухта Золотой Рог',regionId:'r18',city:'Владивосток',lat:43.12,lon:131.9,cat:'viewpoint',tags:['бухта','панорама'],budget:'low',featured:true},
+
+    // Сочи
+    {id:'p57',name:'Олимпийский парк',regionId:'r19',city:'Сочи',lat:43.4,lon:39.95,cat:'activity',tags:['олимпиада','спорт'],budget:'medium',featured:true},
+    {id:'p58',name:'Воронцовские пещеры',regionId:'r19',city:'Сочи',lat:43.75,lon:39.6,cat:'nature',tags:['пещеры','спелеология'],budget:'low',featured:true},
+
+    // Псковская область
+    {id:'p59',name:'Псковский кремль',regionId:'r20',city:'Псков',lat:57.82,lon:28.33,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p60',name:'Изборск',regionId:'r20',city:'Изборск',lat:57.88,lon:28.17,cat:'history',tags:['крепость','средневековье'],budget:'low',featured:true},
+
+    // Дополнительные 100 точек по всей России
+
+    // Карелия (доп.)
+    {id:'p61',name:'Валаам',regionId:'r1',city:'Сортавала',lat:61.38,lon:30.95,cat:'history',tags:['монастырь','остров'],budget:'medium',featured:true},
+    {id:'p62',name:'Марциальные воды',regionId:'r1',city:'Петрозаводск',lat:62.15,lon:34.05,cat:'nature',tags:['источник','история'],budget:'low',featured:true},
+
+    // Алтай (доп.)
+    {id:'p63',name:'Каракольские озёра',regionId:'r2',city:'Чемал',lat:51.0,lon:86.2,cat:'nature',tags:['озёра','трекинг'],budget:'low',featured:true},
+    {id:'p64',name:'Плато Укок',regionId:'r2',city:'Кош-Агач',lat:49.5,lon:88.5,cat:'nature',tags:['плато','археология'],budget:'high',featured:true},
+    {id:'p65',name:'Чуйский тракт',regionId:'r2',city:'Бийск',lat:52.0,lon:85.5,cat:'viewpoint',tags:['трасса','виды'],budget:'low',featured:true},
+
+    // Байкал (доп.)
+    {id:'p66',name:'Бухта Песчаная',regionId:'r3',city:'Иркутск',lat:52.5,lon:106.0,cat:'nature',tags:['бухта','байкал'],budget:'medium',featured:true},
+    {id:'p67',name:'Баргузинский заповедник',regionId:'r3',city:'Северобайкальск',lat:53.8,lon:108.8,cat:'nature',tags:['заповедник','природа'],budget:'medium',featured:true},
+
+    // Камчатка (доп.)
+    {id:'p68',name:'Корякский вулкан',regionId:'r4',city:'Петропавловск',lat:53.32,lon:158.69,cat:'nature',tags:['вулкан','альпинизм'],budget:'high',featured:true},
+    {id:'p69',name:'Халактырский пляж',regionId:'r4',city:'Петропавловск',lat:53.15,lon:158.75,cat:'nature',tags:['пляж','океан'],budget:'low',featured:true},
+
+    // Краснодарский край (доп.)
+    {id:'p70',name:'Гора Ачишхо',regionId:'r5',city:'Сочи',lat:43.75,lon:40.35,cat:'activity',tags:['горы','трекинг'],budget:'medium',featured:true},
+    {id:'p71',name:'33 водопада',regionId:'r5',city:'Сочи',lat:43.85,lon:39.65,cat:'nature',tags:['водопады','природа'],budget:'low',featured:true},
+    {id:'p72',name:'Озеро Кардывач',regionId:'r5',city:'Сочи',lat:43.65,lon:40.45,cat:'nature',tags:['озеро','горы'],budget:'medium',featured:true},
+
+    // Крым (доп.)
+    {id:'p73',name:'Балаклава',regionId:'r6',city:'Севастополь',lat:44.52,lon:33.6,cat:'history',tags:['бухта','история'],budget:'low',featured:true},
+    {id:'p74',name:'Мыс Фиолент',regionId:'r6',city:'Севастополь',lat:44.55,lon:33.5,cat:'nature',tags:['мыс','море'],budget:'low',featured:true},
+    {id:'p75',name:'Долина привидений',regionId:'r6',city:'Бахчисарай',lat:44.75,lon:33.85,cat:'nature',tags:['долина','скалы'],budget:'low',featured:true},
+
+    // Золотое кольцо (доп.)
+    {id:'p76',name:'Угличский кремль',regionId:'r7',city:'Углич',lat:57.53,lon:38.32,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p77',name:'Александровская слобода',regionId:'r7',city:'Александров',lat:56.4,lon:38.73,cat:'history',tags:['дворец','история'],budget:'low',featured:true},
+
+    // Санкт-Петербург (доп.)
+    {id:'p78',name:'Царское Село',regionId:'r8',city:'Пушкин',lat:59.72,lon:30.4,cat:'architecture',tags:['дворец','парк'],budget:'medium',featured:true},
+    {id:'p79',name:'Кронштадт',regionId:'r8',city:'Кронштадт',lat:60.0,lon:29.77,cat:'history',tags:['остров','форты'],budget:'low',featured:true},
+    {id:'p80',name:'Новая Голландия',regionId:'r8',city:'Санкт-Петербург',lat:59.93,lon:30.28,cat:'architecture',tags:['остров','современное'],budget:'low',featured:true},
+
+    // Казань (доп.)
+    {id:'p81',name:'Кремлёвская набережная',regionId:'r9',city:'Казань',lat:55.79,lon:49.12,cat:'viewpoint',tags:['набережная','виды'],budget:'low',featured:true},
+    {id:'p82',name:'Дворец земледельцев',regionId:'r9',city:'Казань',lat:55.79,lon:49.11,cat:'architecture',tags:['дворец','современное'],budget:'low',featured:true},
+
+    // Москва (доп.)
+    {id:'p83',name:'ВДНХ',regionId:'r10',city:'Москва',lat:55.83,lon:37.63,cat:'architecture',tags:['павильоны','парк'],budget:'low',featured:true},
+    {id:'p84',name:'Москва-Сити',regionId:'r10',city:'Москва',lat:55.75,lon:37.54,cat:'viewpoint',tags:['небоскрёбы','современное'],budget:'medium',featured:true},
+    {id:'p85',name:'Парк Горького',regionId:'r10',city:'Москва',lat:55.73,lon:37.6,cat:'nature',tags:['парк','отдых'],budget:'low',featured:true},
+    {id:'p86',name:'Измайловский кремль',regionId:'r10',city:'Москва',lat:55.79,lon:37.75,cat:'architecture',tags:['кремль','современное'],budget:'low',featured:true},
+
+    // Урал (доп.)
+    {id:'p87',name:'Озеро Тургояк',regionId:'r11',city:'Миасс',lat:55.4,lon:60.1,cat:'nature',tags:['озеро','горы'],budget:'low',featured:true},
+    {id:'p88',name:'Гора Иремель',regionId:'r11',city:'Белорецк',lat:54.5,lon:58.5,cat:'nature',tags:['гора','трекинг'],budget:'low',featured:true},
+
+    // Дагестан (доп.)
+    {id:'p89',name:'Гамсутль',regionId:'r12',city:'Гуниб',lat:42.3,lon:46.8,cat:'history',tags:['аул','горы'],budget:'low',featured:true},
+    {id:'p90',name:'Чиркейское водохранилище',regionId:'r12',city:'Махачкала',lat:42.8,lon:47.0,cat:'nature',tags:['водохранилище','горы'],budget:'low',featured:true},
+
+    // Мурманская область (доп.)
+    {id:'p91',name:'Сейдозеро',regionId:'r13',city:'Ловозеро',lat:67.9,lon:35.5,cat:'nature',tags:['озеро','саамы'],budget:'medium',featured:true},
+    {id:'p92',name:'Абрам-мыс',regionId:'r13',city:'Мурманск',lat:68.5,lon:33.5,cat:'viewpoint',tags:['мыс','виды'],budget:'low',featured:true},
+
+    // Нижегородская область (доп.)
+    {id:'p93',name:'Городецкий кремль',regionId:'r14',city:'Городец',lat:56.65,lon:43.47,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p94',name:'Щелоковский хутор',regionId:'r14',city:'Нижний Новгород',lat:56.3,lon:43.9,cat:'nature',tags:['деревня','природа'],budget:'low',featured:true},
+
+    // Сахалин (доп.)
+    {id:'p95',name:'Монумент Сахалинской железной дороги',regionId:'r15',city:'Южно-Сахалинск',lat:46.96,lon:142.73,cat:'history',tags:['памятник','история'],budget:'low',featured:true},
+    {id:'p96',name:'Гора Чехова',regionId:'r15',city:'Южно-Сахалинск',lat:47.0,lon:142.5,cat:'viewpoint',tags:['гора','виды'],budget:'low',featured:true},
+
+    // Якутия (доп.)
+    {id:'p97',name:'Кысыл-Сыр',regionId:'r16',city:'Якутск',lat:62.0,lon:129.5,cat:'nature',tags:['природа','уникальное'],budget:'high',featured:true},
+    {id:'p98',name:'Батагайский ледник',regionId:'r16',city:'Якутск',lat:61.0,lon:128.0,cat:'nature',tags:['ледник','уникальное'],budget:'high',featured:true},
+
+    // Калининград (доп.)
+    {id:'p99',name:'Светлогорск',regionId:'r17',city:'Светлогорск',lat:54.94,lon:20.07,cat:'nature',tags:['курорт','море'],budget:'medium',featured:true},
+    {id:'p100',name:'Зеленоградск',regionId:'r17',city:'Зеленоградск',lat:54.96,lon:20.48,cat:'nature',tags:['курорт','море'],budget:'medium',featured:true},
+
+    // Владивосток (доп.)
+    {id:'p101',name:'Фуникулер',regionId:'r18',city:'Владивосток',lat:43.11,lon:131.89,cat:'viewpoint',tags:['фуникулер','виды'],budget:'low',featured:true},
+    {id:'p102',name:'Остров Попова',regionId:'r18',city:'Владивосток',lat:42.8,lon:132.0,cat:'nature',tags:['остров','море'],budget:'medium',featured:true},
+
+    // Сочи (доп.)
+    {id:'p103',name:'Сочинский дендрарий',regionId:'r19',city:'Сочи',lat:43.58,lon:39.73,cat:'nature',tags:['дендрарий','природа'],budget:'low',featured:true},
+    {id:'p104',name:'Агурские водопады',regionId:'r19',city:'Сочи',lat:43.55,lon:39.78,cat:'nature',tags:['водопады','природа'],budget:'low',featured:true},
+
+    // Псковская область (доп.)
+    {id:'p105',name:'Пушкинские Горы',regionId:'r20',city:'Пушкинские Горы',lat:57.07,lon:28.7,cat:'history',tags:['музей-заповедник','история'],budget:'low',featured:true},
+    {id:'p106',name:'Михайловское',regionId:'r20',city:'Пушкинские Горы',lat:57.05,lon:28.68,cat:'history',tags:['усадьба','Пушкин'],budget:'low',featured:true},
+
+    // Новые регионы и точки
+
+    // Татарстан (доп.)
+    {id:'p107',name:'Болгар',regionId:'r9',city:'Болгар',lat:54.96,lon:49.03,cat:'history',tags:['крепость','история'],budget:'low',featured:true},
+    {id:'p108',name:'Чистополь',regionId:'r9',city:'Чистополь',lat:55.36,lon:50.64,cat:'history',tags:['купечество','история'],budget:'low',featured:true},
+
+    // Башкортостан
+    {id:'p109',name:'Шульган-Таш',regionId:'r11',city:'Уфа',lat:54.5,lon:57.5,cat:'nature',tags:['пещера','природа'],budget:'low',featured:true},
+    {id:'p110',name:'Гора Ямантау',regionId:'r11',city:'Уфа',lat:54.0,lon:57.0,cat:'nature',tags:['гора','трекинг'],budget:'low',featured:true},
+
+    // Карелия (доп. 2)
+    {id:'p111',name:'Киндасово',regionId:'r1',city:'Петрозаводск',lat:62.3,lon:34.5,cat:'nature',tags:['деревня','природа'],budget:'low',featured:true},
+    {id:'p112',name:'Панозеро',regionId:'r1',city:'Кемь',lat:65.5,lon:33.5,cat:'nature',tags:['озеро','рыбалка'],budget:'low',featured:true},
+
+    // Алтай (доп. 2)
+    {id:'p113',name:'Катульская пещера',regionId:'r2',city:'Чемал',lat:51.2,lon:85.8,cat:'nature',tags:['пещера','природа'],budget:'low',featured:true},
+    {id:'p114',name:'Семинский перевал',regionId:'r2',city:'Бийск',lat:51.5,lon:85.8,cat:'viewpoint',tags:['перевал','виды'],budget:'low',featured:true},
+
+    // Байкал (доп. 2)
+    {id:'p115',name:'Мыс Хобой',regionId:'r3',city:'Иркутск',lat:53.5,lon:107.5,cat:'viewpoint',tags:['мыс','байкал'],budget:'medium',featured:true},
+    {id:'p116',name:'Шумакский перевал',regionId:'r3',city:'Иркутск',lat:52.0,lon:107.0,cat:'nature',tags:['перевал','трекинг'],budget:'medium',featured:true},
+
+    // Камчатка (доп. 2)
+    {id:'p117',name:'Налычевская долина',regionId:'r4',city:'Петропавловск',lat:53.5,lon:159.0,cat:'nature',tags:['долина','горячие источники'],budget:'high',featured:true},
+    {id:'p118',name:'Командорские острова',regionId:'r4',city:'Петропавловск',lat:55.0,lon:166.0,cat:'nature',tags:['острова','природа'],budget:'high',featured:true},
+
+    // Краснодарский край (доп. 2)
+    {id:'p119',name:'Плесецкая щель',regionId:'r5',city:'Краснодар',lat:44.7,lon:39.8,cat:'nature',tags:['ущелье','природа'],budget:'low',featured:true},
+    {id:'p120',name:'Гора Агепста',regionId:'r5',city:'Сочи',lat:43.5,lon:40.5,cat:'viewpoint',tags:['гора','виды'],budget:'medium',featured:true},
+
+    // Крым (доп. 2)
+    {id:'p121',name:'Новый Свет',regionId:'r6',city:'Судак',lat:44.83,lon:34.92,cat:'nature',tags:['бухта','природа'],budget:'low',featured:true},
+    {id:'p122',name:'Мыс Казантип',regionId:'r6',city:'Щёлкино',lat:45.4,lon:36.4,cat:'nature',tags:['мыс','заповедник'],budget:'low',featured:true},
+
+    // Золотое кольцо (доп. 2)
+    {id:'p123',name:'Костромской кремль',regionId:'r7',city:'Кострома',lat:57.77,lon:40.93,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p124',name:'Ипатьевский монастырь',regionId:'r7',city:'Кострома',lat:57.76,lon:40.91,cat:'history',tags:['монастырь','история'],budget:'low',featured:true},
+
+    // Санкт-Петербург (доп. 2)
+    {id:'p125',name:'Павловск',regionId:'r8',city:'Павловск',lat:59.68,lon:30.45,cat:'architecture',tags:['дворец','парк'],budget:'medium',featured:true},
+    {id:'p126',name:'Гатчина',regionId:'r8',city:'Гатчина',lat:59.56,lon:30.13,cat:'architecture',tags:['дворец','парк'],budget:'medium',featured:true},
+
+    // Казань (доп. 2)
+    {id:'p127',name:'Раифский монастырь',regionId:'r9',city:'Казань',lat:55.95,lon:48.75,cat:'history',tags:['монастырь','озеро'],budget:'low',featured:true},
+    {id:'p128',name:'Остров-град Свияжск',regionId:'r9',city:'Свияжск',lat:55.77,lon:48.66,cat:'history',tags:['остров','юнеско'],budget:'low',featured:true},
+
+    // Москва (доп. 2)
+    {id:'p129',name:'Усадьба Коломенское',regionId:'r10',city:'Москва',lat:55.67,lon:37.67,cat:'history',tags:['усадьба','музей'],budget:'low',featured:true},
+    {id:'p130',name:'Царицыно',regionId:'r10',city:'Москва',lat:55.61,lon:37.69,cat:'architecture',tags:['дворец','парк'],budget:'low',featured:true},
+
+    // Урал (доп. 2)
+    {id:'p131',name:'Озеро Зюраткуль',regionId:'r11',city:'Сатка',lat:54.9,lon:59.5,cat:'nature',tags:['озеро','горы'],budget:'low',featured:true},
+    {id:'p132',name:'Конжаковский камень',regionId:'r11',city:'Серов',lat:60.0,lon:59.8,cat:'nature',tags:['гора','трекинг'],budget:'low',featured:true},
+
+    // Дагестан (доп. 2)
+    {id:'p133',name:'Солкинская коса',regionId:'r12',city:'Махачкала',lat:43.0,lon:47.5,cat:'nature',tags:['коса','море'],budget:'low',featured:true},
+    {id:'p134',name:'Талгинское ущелье',regionId:'r12',city:'Махачкала',lat:42.9,lon:47.2,cat:'nature',tags:['ущелье','горы'],budget:'low',featured:true},
+
+    // Мурманская область (доп. 2)
+    {id:'p135',name:'Озеро Умбозеро',regionId:'r13',city:'Умба',lat:66.7,lon:33.5,cat:'nature',tags:['озеро','рыбалка'],budget:'low',featured:true},
+    {id:'p136',name:'Мыс Немецкий',regionId:'r13',city:'Мурманск',lat:69.0,lon:34.0,cat:'viewpoint',tags:['мыс','виды'],budget:'low',featured:true},
+
+    // Нижегородская область (доп. 2)
+    {id:'p137',name:'Арзамас',regionId:'r14',city:'Арзамас',lat:55.39,lon:43.82,cat:'history',tags:['город','история'],budget:'low',featured:true},
+    {id:'p138',name:'Выкса',regionId:'r14',city:'Выкса',lat:55.32,lon:42.17,cat:'nature',tags:['парк','природа'],budget:'low',featured:true},
+
+    // Сахалин (доп. 2)
+    {id:'p139',name:'Мыс Евстафия',regionId:'r15',city:'Южно-Сахалинск',lat:46.8,lon:143.0,cat:'viewpoint',tags:['мыс','виды'],budget:'low',featured:true},
+    {id:'p140',name:'Озеро Буссе',regionId:'r15',city:'Южно-Сахалинск',lat:46.7,lon:142.8,cat:'nature',tags:['озеро','природа'],budget:'medium',featured:true},
+
+    // Якутия (доп. 2)
+    {id:'p141',name:'Столбы Хара-Улах',regionId:'r16',city:'Якутск',lat:63.0,lon:130.0,cat:'nature',tags:['скалы','уникальное'],budget:'high',featured:true},
+    {id:'p142',name:'Долина Ынырчан',regionId:'r16',city:'Якутск',lat:62.5,lon:129.0,cat:'nature',tags:['долина','уникальное'],budget:'high',featured:true},
+
+    // Калининград (доп. 2)
+    {id:'p143',name:'Пиллавский маяк',regionId:'r17',city:'Балтийск',lat:54.65,lon:19.9,cat:'history',tags:['маяк','история'],budget:'low',featured:true},
+    {id:'p144',name:'Янтарный карьер',regionId:'r17',city:'Янтарный',lat:54.9,lon:20.0,cat:'nature',tags:['карьер','янтарь'],budget:'low',featured:true},
+
+    // Владивосток (доп. 2)
+    {id:'p145',name:'Маяк на Эгершельде',regionId:'r18',city:'Владивосток',lat:43.08,lon:131.85,cat:'viewpoint',tags:['маяк','виды'],budget:'low',featured:true},
+    {id:'p146',name:'Остров Рейнеке',regionId:'r18',city:'Владивосток',lat:42.9,lon:132.1,cat:'nature',tags:['остров','природа'],budget:'medium',featured:true},
+
+    // Сочи (доп. 2)
+    {id:'p147',name:'Красная Поляна',regionId:'r19',city:'Сочи',lat:43.68,lon:40.2,cat:'activity',tags:['горы','лыжи'],budget:'high',featured:true},
+    {id:'p148',name:'Тисо-самшитовая роща',regionId:'r19',city:'Сочи',lat:43.7,lon:39.8,cat:'nature',tags:['роща','природа'],budget:'low',featured:true},
+
+    // Псковская область (доп. 2)
+    {id:'p149',name:'Печоры',regionId:'r20',city:'Печоры',lat:57.82,lon:27.6,cat:'history',tags:['монастырь','история'],budget:'low',featured:true},
+    {id:'p150',name:'Остров Талабск',regionId:'r20',city:'Псков',lat:57.9,lon:28.0,cat:'nature',tags:['остров','озеро'],budget:'low',featured:true},
+
+    // Новые регионы
+
+    // Тюменская область
+    {id:'p151',name:'Тобольский кремль',regionId:'r11',city:'Тобольск',lat:58.2,lon:68.25,cat:'history',tags:['кремль','история'],budget:'low',featured:true},
+    {id:'p152',name:'Абалакский монастырь',regionId:'r11',city:'Тюмень',lat:57.5,lon:69.0,cat:'history',tags:['монастырь','история'],budget:'low',featured:true},
+
+    // Архангельская область
+    {id:'p153',name:'Соловецкие острова',regionId:'r1',city:'Архангельск',lat:65.0,lon:35.5,cat:'history',tags:['юнеско','монастырь'],budget:'high',featured:true},
+    {id:'p154',name:'Малые Корелы',regionId:'r1',city:'Архангельск',lat:64.5,lon:40.5,cat:'history',tags:['деревня','зодчество'],budget:'low',featured:true},
+
+    // Вологодская область
+    {id:'p155',name:'Кирилло-Белозерский монастырь',regionId:'r7',city:'Кириллов',lat:59.97,lon:38.0,cat:'history',tags:['монастырь','история'],budget:'low',featured:true},
+    {id:'p156',name:'Ферапонтов монастырь',regionId:'r7',city:'Кириллов',lat:59.95,lon:37.9,cat:'history',tags:['монастырь','фрески'],budget:'low',featured:true},
+
+    // Тверская область
+    {id:'p157',name:'Осташков',regionId:'r7',city:'Осташков',lat:57.15,lon:33.1,cat:'history',tags:['город','история'],budget:'low',featured:true},
+    {id:'p158',name:'Селигер',regionId:'r7',city:'Осташков',lat:57.2,lon:33.0,cat:'nature',tags:['озеро','природа'],budget:'low',featured:true},
+
+    // Ярославская область
+    {id:'p159',name:'Ярославский кремль',regionId:'r7',city:'Ярославль',lat:57.62,lon:39.85,cat:'history',tags:['кремль','юнеско'],budget:'low',featured:true},
+    {id:'p160',name:'Спасо-Преображенский монастырь',regionId:'r7',city:'Ярославль',lat:57.63,lon:39.87,cat:'history',tags:['монастырь','история'],budget:'low',featured:true}
+];
+
+const interests=[
+    {id:'nature',label:'🌲 Природа'},
+    {id:'history',label:'📜 История'},
+    {id:'museum',label:'🏛️ Музеи'},
+    {id:'food',label:'🍽️ Гастро'},
+    {id:'activity',label:'🏃 Актив'},
+    {id:'family',label:'👨‍👩‍👧 Семья'},
+    {id:'architecture',label:'🏛️ Архитектура'},
+    {id:'viewpoint',label:'🏔️ Виды'}
+];
+
+const reasons={
+    nature:['Уникальная природная локация','Живописный пейзаж для фото','Природная достопримечательность','Место силы вдали от города','Экосистема с богатым биоразнообразием'],
+    history:['Историческая значимость','Памятник культурного наследия','Свидетель многовековой истории','Место ключевых событий','Архитектурный памятник под охраной'],
+    museum:['Богатая коллекция экспонатов','Культурное наследие региона','Уникальные экспонаты','Погружение в историю и искусство','Интерактивные выставки'],
+    food:['Гастрономическая достопримечательность','Аутентичная местная кухня','Уникальные вкусы региона','Кулинарное путешествие','Традиционные блюда'],
+    activity:['Активный отдых на природе','Приключение для любителей адреналина','Спорт на свежем воздухе','Уникальная активность','Драйв и эмоции'],
+    architecture:['Архитектурный шедевр','Уникальное строение','Фотогеничный фасад','Образец архитектурной мысли','Памятник зодчества'],
+    viewpoint:['Панорамный вид с высоты','Лучшая смотровая площадка','Фотогеничная локация','Захватывающий пейзаж','Обзорная точка']
+};
+
+const catLabels={nature:'🌲 Природа',history:'📜 История',museum:'🏛️ Музей',food:'🍽️ Гастро',activity:'🏃 Актив',architecture:'🏛️ Архитектура',viewpoint:'🏔️ Вид'};
+
+function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(a=>a.classList.remove('active'));
+    document.querySelectorAll('[data-page="'+id+'"]').forEach(a=>a.classList.add('active'));
+    window.scrollTo(0,0);
+    if(id==='places')renderPlaces();
+    if(id==='map')initMainMap();
+}
+
+function toggleMobile(){
+    document.getElementById('burger-btn').classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+}
+function closeMobile(){
+    document.getElementById('burger-btn').classList.remove('open');
+    document.getElementById('mobile-menu').classList.remove('open');
+}
+
+function init(){
+    var rs=document.getElementById('input-region');
+    regions.forEach(function(r){var o=document.createElement('option');o.value=r.slug;o.textContent=r.name;rs.appendChild(o)});
+
+    var ig=document.getElementById('interests-grid');
+    interests.forEach(function(i){
+        var b=document.createElement('button');b.type='button';b.textContent=i.label;b.dataset.interest=i.id;
+        b.style.cssText='padding:.6rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:.75rem;color:#9ca3af;cursor:pointer;transition:all .3s;font-size:.8rem';
+        b.onclick=function(){toggleInterest(this)};
+        ig.appendChild(b);
+    });
+
+    document.getElementById('input-days').oninput=function(e){document.getElementById('days-value').textContent=e.target.value};
+    document.getElementById('input-date').value=new Date().toISOString().split('T')[0];
+}
+
+function toggleInterest(btn){
+    if(btn.dataset.selected==='true'){btn.dataset.selected='false';btn.style.borderColor='rgba(255,255,255,0.1)';btn.style.background='rgba(255,255,255,0.05)';btn.style.color='#9ca3af'}
+    else{btn.dataset.selected='true';btn.style.borderColor='#00f5d4';btn.style.background='rgba(0,245,212,0.1)';btn.style.color='#00f5d4'}
+}
+
+function haversine(lat1,lon1,lat2,lon2){
+    var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+    var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t}return b}
+
+function sortByProximity(arr){
+    if(arr.length<=1)return arr;
+    var featured=arr.filter(function(p){return p.featured});
+    var pool=featured.length>0?featured:arr;
+    var sorted=[pool[Math.floor(Math.random()*pool.length)]];
+    var remaining=arr.filter(function(p){return p.id!==sorted[0].id});
+    while(remaining.length>0){
+        var last=sorted[sorted.length-1];
+        var dists=remaining.map(function(p,i){return{p:p,i:i,d:haversine(last.lat,last.lon,p.lat,p.lon)}});
+        dists.sort(function(a,b){return a.d-b.d});
+        var topN=Math.min(3,dists.length);
+        var chosen=dists[Math.floor(Math.random()*topN)];
+        sorted.push(chosen.p);
+        remaining.splice(chosen.i,1);
+    }
+    return sorted;
+}
+
+function generateRoute(){
+    var region=document.getElementById('input-region').value;
+    var days=parseInt(document.getElementById('input-days').value);
+    var pace=document.getElementById('input-pace').value;
+    var budget=document.getElementById('input-budget').value;
+    var transport=document.getElementById('input-transport').value;
+
+    var selectedInterests=[];
+    document.querySelectorAll('#interests-grid button').forEach(function(b){if(b.dataset.selected==='true')selectedInterests.push(b.dataset.interest)});
+
+    var filtered=places.filter(function(p){
+        if(region){var r=null;regions.forEach(function(reg){if(reg.slug===region)r=reg});if(r&&p.regionId!==r.id)return false}
+        if(budget==='low'&&p.budget!=='low')return false;
+        if(selectedInterests.length>0&&selectedInterests.indexOf(p.cat)===-1)return false;
+        return true;
+    });
+
+    // ИСПРАВЛЕНО: если выбран регион, показываем ТОЛЬКО точки из этого региона
+    if(region&&filtered.length===0){
+        alert('В выбранном регионе нет точек с такими параметрами. Попробуйте изменить интересы или бюджет.');
+        return;
+    }
+
+    // Если регион НЕ выбран, добавляем featured точки со всей России
+    if(!region){
+        var needed=days*(pace==='relaxed'?2:pace==='intensive'?5:3);
+        if(filtered.length<needed){
+            var extra=places.filter(function(p){return p.featured&&filtered.indexOf(p)===-1});
+            filtered=filtered.concat(shuffle(extra));
+        }
+    }
+
+    var sorted=sortByProximity(shuffle(filtered));
+    var stopsPerDay=pace==='relaxed'?2:pace==='intensive'?5:3;
+    var resultDays=[];
+    var totalDistance=0;
+
+    for(var i=0;i<days;i++){
+        var dayPlaces=sorted.slice(i*stopsPerDay,(i+1)*stopsPerDay);
+        if(dayPlaces.length===0)break;
+        var stops=[];
+        for(var j=0;j<dayPlaces.length;j++){
+            var place=dayPlaces[j];
+            var prev=j>0?dayPlaces[j-1]:null;
+            var dist=prev?haversine(prev.lat,prev.lon,place.lat,place.lon):0;
+            totalDistance+=dist;
+            var speed=transport==='car'?60:transport==='walk'?5:30;
+            var travelTime=prev?Math.round(dist/speed*60*(0.85+Math.random()*0.3)):0;
+            var baseStay=pace==='relaxed'?120:pace==='normal'?60:30;
+            var stayTime=Math.round(baseStay*(0.8+Math.random()*0.4));
+
+            var catReasons=reasons[place.cat]||['Интересная локация'];
+            var reason=catReasons[Math.floor(Math.random()*catReasons.length)];
+
+            stops.push({
+                id:place.id,name:place.name,lat:place.lat,lon:place.lon,cat:place.cat,
+                dist:Math.round(dist),travelTime:travelTime,stayTime:stayTime,
+                reason:reason,city:place.city||''
+            });
+        }
+        resultDays.push({dayIndex:i+1,stops:stops});
+    }
+
+    var totalStops=resultDays.reduce(function(s,d){return s+d.stops.length},0);
+    var matchScore=Math.round(50+Math.random()*35);
+    var regionName=region?(regions.find(function(r){return r.slug===region})||{}).name||'Россия':'Россия';
+
+    var tripTitles=['Контур: '+regionName,'Путешествие по '+regionName,'Откройте '+regionName,regionName+': ваш маршрут'];
+    var tripTitle=tripTitles[Math.floor(Math.random()*tripTitles.length)];
+
+    document.getElementById('builder-form').classList.add('hidden');
+    document.getElementById('route-result').classList.remove('hidden');
+
+    document.getElementById('result-title').textContent=tripTitle;
+    document.getElementById('result-overview').textContent='Маршрут по '+regionName+' на '+days+' '+(days===1?'день':days<5?'дня':'дней')+'. Включает '+totalStops+' точек.';
+    document.getElementById('result-score').textContent=matchScore+'%';
+    document.getElementById('result-stops').textContent=totalStops;
+    document.getElementById('result-distance').textContent=Math.round(totalDistance);
+
+    renderTimeline(resultDays);
+    initResultMap(resultDays,transport);
+
+    var allStops=[];resultDays.forEach(function(d){d.stops.forEach(function(s){allStops.push(s)})});
+    var rtext=allStops.map(function(s){return s.lat+','+s.lon}).join('~');
+    var rtt=transport==='walk'?'pd':transport==='car'?'auto':'mt';
+    document.getElementById('open-yandex').href='https://yandex.ru/maps/?rtext='+rtext+'&rtt='+rtt;
+
+    window.currentRoute={title:tripTitle,days:resultDays,matchScore:matchScore,totalDistance:Math.round(totalDistance),transport:transport};
+}
+
+function renderTimeline(days){
+    var timeline=document.getElementById('result-timeline');
+    timeline.innerHTML='<h3 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem">📋 Таймлайн маршрута</h3>';
+
+    days.forEach(function(day,dayIdx){
+        var dayDiv=document.createElement('div');
+        dayDiv.className='day-card';
+        var html='<h4 style="color:#00f5d4;margin-bottom:.75rem;font-size:1.1rem">День '+day.dayIndex+'</h4>';
+
+        var currentTime=8*60; // 8:00 в минутах
+
+        day.stops.forEach(function(stop,stopIdx){
+            var arrivalTime=Math.floor(currentTime/60)+':'+String(currentTime%60).padStart(2,'0');
+            var departureTime=currentTime+stop.stayTime;
+            var departureTimeStr=Math.floor(departureTime/60)+':'+String(departureTime%60).padStart(2,'0');
+
+            html+='<div class="stop-item" id="stop-'+dayIdx+'-'+stopIdx+'">';
+            html+='<div style="font-weight:600;color:#f0f0f5">'+stop.name+'</div>';
+            html+='<div style="color:#9ca3af;font-size:.875rem;margin-top:.25rem">'+stop.reason+'</div>';
+            html+='<div style="color:#6b7280;font-size:.75rem;margin-top:.25rem">';
+            html+='🕐 '+arrivalTime+' - '+departureTimeStr+' ('+stop.stayTime+' мин)';
+            if(stop.travelTime>0)html+=' • 🚗 '+stop.dist+' км ('+stop.travelTime+' мин в пути)';
+            html+='</div>';
+            html+='<div class="stop-actions">';
+            if(stopIdx>0)html+='<button onclick="moveStop('+dayIdx+','+stopIdx+',-1)">↑ Up</button>';
+            if(stopIdx<day.stops.length-1)html+='<button onclick="moveStop('+dayIdx+','+stopIdx+',1)">↓ Down</button>';
+            html+='<button onclick="removeStop('+dayIdx+','+stopIdx+')" style="color:#ff5050">✕ Удалить</button>';
+            html+='</div></div>';
+
+            currentTime=departureTime+stop.travelTime;
+        });
+
+        dayDiv.innerHTML=html;
+        timeline.appendChild(dayDiv);
+    });
+}
+
+function moveStop(dayIdx,stopIdx,dir){
+    if(!window.currentRoute)return;
+    var day=window.currentRoute.days[dayIdx];
+    var newIdx=stopIdx+dir;
+    if(newIdx<0||newIdx>=day.stops.length)return;
+    var temp=day.stops[stopIdx];
+    day.stops[stopIdx]=day.stops[newIdx];
+    day.stops[newIdx]=temp;
+    renderTimeline(window.currentRoute.days);
+    initResultMap(window.currentRoute.days,window.currentRoute.transport);
+}
+
+function removeStop(dayIdx,stopIdx){
+    if(!window.currentRoute)return;
+    window.currentRoute.days[dayIdx].stops.splice(stopIdx,1);
+    if(window.currentRoute.days[dayIdx].stops.length===0)window.currentRoute.days.splice(dayIdx,1);
+    window.currentRoute.days.forEach(function(d,i){d.dayIndex=i+1});
+    renderTimeline(window.currentRoute.days);
+    initResultMap(window.currentRoute.days,window.currentRoute.transport);
+
+    var totalStops=window.currentRoute.days.reduce(function(s,d){return s+d.stops.length},0);
+    document.getElementById('result-stops').textContent=totalStops;
+}
+
+var resultMapInstance=null;
+
+function initResultMap(days,transport){
+    var allStops=[];
+    days.forEach(function(d){d.stops.forEach(function(s){allStops.push(s)})});
+    if(allStops.length===0)return;
+
+    if(resultMapInstance){try{resultMapInstance.destroy()}catch(e){}resultMapInstance=null}
+
+    ymaps.ready(function(){
+        resultMapInstance=new ymaps.Map('result-map',{center:[allStops[0].lat,allStops[0].lon],zoom:8,controls:['zoomControl','fullscreenControl']});
+
+        allStops.forEach(function(stop,idx){
+            var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[stop.lat,stop.lon]},properties:{iconContent:(idx+1).toString(),balloonContentHeader:'<strong style="color:#00b4d8">'+stop.name+'</strong>',balloonContentBody:'<span style="color:#888">'+stop.reason+'</span>'}},
+            {preset:'islands#blueCircleDotIconWithNumber'});
+            resultMapInstance.geoObjects.add(pm);
+        });
+
+        if(allStops.length>=2){
+            var pts=allStops.map(function(s){return[s.lat,s.lon]});
+            var mode=transport==='walk'?'pedestrian':'auto';
+            var mr=new ymaps.multiRouter.MultiRoute({referencePoints:pts},{boundsAutoApply:true,routeStrokeColor:'#00f5d4',routeStrokeWidth:4,routeOpacity:0.8,routingMode:mode});
+            resultMapInstance.geoObjects.add(mr);
+        }
+    });
+}
+
+var mainMapInstance=null;
+function initMainMap(){
+    if(mainMapInstance)return;
+    ymaps.ready(function(){
+        mainMapInstance=new ymaps.Map('main-map',{center:[60,90],zoom:3,controls:['zoomControl','fullscreenControl']});
+        places.forEach(function(p){
+            var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[p.lat,p.lon]},properties:{balloonContentHeader:'<strong style="color:#00b4d8">'+p.name+'</strong>',balloonContentBody:'<span style="color:#888">'+(p.city||'')+'</span>'}},
+            {preset:'islands#blueCircleDotIcon'});
+            mainMapInstance.geoObjects.add(pm);
+        });
+    });
+}
+
+function renderPlaces(){
+    var grid=document.getElementById('places-grid');grid.innerHTML='';
+    var search=document.getElementById('search-places').value.toLowerCase();
+    var filtered=places.filter(function(p){return !search||p.name.toLowerCase().indexOf(search)!==-1||(p.city&&p.city.toLowerCase().indexOf(search)!==-1)||p.tags.join(' ').indexOf(search)!==-1});
+
+    filtered.forEach(function(place){
+        var region=null;regions.forEach(function(r){if(r.id===place.regionId)region=r});
+        var card=document.createElement('div');card.className='card card-clickable';
+        card.onclick=function(){openPlaceModal(place)};
+        card.innerHTML='<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">'+place.name+'</h3>'+
+            '<p style="color:#9ca3af;font-size:.875rem;margin-bottom:.25rem">'+(place.city||(region?region.name:''))+'</p>'+
+            '<p style="color:#6b7280;font-size:.75rem;margin-bottom:.75rem">'+(catLabels[place.cat]||place.cat)+'</p>'+
+            '<p style="color:#6b7280;font-size:.875rem;margin-bottom:1rem">'+place.tags.map(function(t){return'#'+t}).join(' ')+'</p>'+
+            '<button class="btn-secondary btn-small" style="width:100%">🗺️ На карте</button>';
+        grid.appendChild(card);
+    });
+}
+
+var modalMapInstance=null;
+function openPlaceModal(place){
+    var region=null;regions.forEach(function(r){if(r.id===place.regionId)region=r});
+    document.getElementById('modal-title').textContent=place.name;
+    document.getElementById('modal-info').innerHTML='<p>'+(place.city||(region?region.name:''))+' • '+(catLabels[place.cat]||place.cat)+'</p><p style="margin-top:.5rem">'+place.tags.map(function(t){return'#'+t}).join(' ')+'</p>';
+    document.getElementById('modal-yandex-link').href='https://yandex.ru/maps/?pt='+place.lon+','+place.lat+'&z=15';
+    document.getElementById('place-modal').classList.add('active');
+    setTimeout(function(){
+        if(modalMapInstance){try{modalMapInstance.destroy()}catch(e){}modalMapInstance=null}
+        ymaps.ready(function(){
+            modalMapInstance=new ymaps.Map('modal-map',{center:[place.lat,place.lon],zoom:12,controls:['zoomControl']});
+            var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[place.lat,place.lon]},properties:{balloonContentHeader:'<strong>'+place.name+'</strong>'}},{preset:'islands#blueCircleDotIcon'});
+            modalMapInstance.geoObjects.add(pm);
+        });
+    },200);
+}
+function closeModal(){document.getElementById('place-modal').classList.remove('active');if(modalMapInstance){try{modalMapInstance.destroy()}catch(e){}modalMapInstance=null}}
+
+function resetBuilder(){
+    document.getElementById('builder-form').classList.remove('hidden');
+    document.getElementById('route-result').classList.add('hidden');
+    if(resultMapInstance){try{resultMapInstance.destroy()}catch(e){}resultMapInstance=null}
+    window.currentRoute=null;
+}
+
+document.getElementById('search-places').oninput=renderPlaces;
+document.getElementById('place-modal').onclick=function(e){if(e.target===this)closeModal()};
+
+init();
+</script>
+</body>
+</html>

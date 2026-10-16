@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TripMind | Умные маршруты по России</title>
+<script src="https://api-maps.yandex.ru/2.1/?apikey=532e29b4-842c-43c7-90d5-f6b3f9dff1d3&lang=ru_RU"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#f0f0f5;overflow-x:hidden}
+.container{max-width:1280px;margin:0 auto;padding:0 1rem}
+@media(min-width:640px){.container{padding:0 1.5rem}}
+nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(26,26,46,0.95);backdrop-filter:blur(30px);border-bottom:1px solid rgba(255,255,255,0.05)}
+nav .container{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font-weight:800;font-size:1.2rem;color:#f0f0f5;text-decoration:none;cursor:pointer}
+.logo:hover{color:#00f5d4}
+.nav-links{display:none;gap:.25rem}
+@media(min-width:768px){.nav-links{display:flex}}
+.nav-links a{padding:.4rem .65rem;border-radius:.5rem;font-size:.8rem;color:#9ca3af;text-decoration:none;cursor:pointer;transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:#00f5d4;background:rgba(0,245,212,0.1)}
+.burger{display:flex;flex-direction:column;gap:4px;cursor:pointer;padding:8px;background:none;border:none}
+.burger span{display:block;width:20px;height:2px;background:#f0f0f5;border-radius:2px;transition:all .3s}
+.burger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+@media(min-width:768px){.burger{display:none}}
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;bottom:0;background:rgba(10,10,15,0.98);padding:1.5rem;z-index:49;overflow-y:auto}
+.mobile-menu.open{display:block}
+.mobile-menu a{display:block;padding:.75rem 1rem;border-radius:.5rem;color:#9ca3af;text-decoration:none;cursor:pointer;margin-bottom:.25rem}
+.mobile-menu a:hover,.mobile-menu a.active{color:#00f5d4;background:rgba(0,245,212,0.1)}
+@media(min-width:768px){.mobile-menu{display:none!important}}
+.btn-primary{background:linear-gradient(135deg,#00f5d4,#00b4d8);color:#0a0a0f;font-weight:600;padding:10px 24px;border-radius:10px;border:none;cursor:pointer;text-decoration:none;display:inline-block;font-size:.9rem;transition:all .3s}
+.btn-primary:hover{box-shadow:0 0 25px rgba(0,245,212,0.4);transform:translateY(-1px)}
+.btn-secondary{background:rgba(255,255,255,0.05);border:1px solid rgba(0,245,212,0.3);color:#00f5d4;font-weight:500;padding:10px 24px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-block;font-size:.9rem;transition:all .3s}
+.btn-secondary:hover{background:rgba(0,245,212,0.1)}
+.gradient-text{background:linear-gradient(135deg,#00f5d4,#b388ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page{display:none;padding-top:76px;min-height:100vh}
+.page.active{display:block}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,245,212,0.08) 0%,transparent 60%)}
+.hero-content{position:relative;z-index:10;max-width:64rem;padding:0 1rem}
+.hero h1{font-size:3rem;font-weight:900;margin-bottom:1.5rem}
+@media(min-width:640px){.hero h1{font-size:4.5rem}}
+@media(min-width:1024px){.hero h1{font-size:6rem}}
+.hero p{font-size:1.1rem;color:#9ca3af;margin-bottom:2rem;max-width:42rem;margin:0 auto 2rem}
+.hero-buttons{display:flex;flex-direction:column;gap:.75rem;justify-content:center}
+@media(min-width:640px){.hero-buttons{flex-direction:row}}
+section{padding:3rem 1rem}
+.section-title{font-size:1.75rem;font-weight:700;margin-bottom:.75rem;text-align:center}
+.grid{display:grid;gap:1rem}
+.grid-3{grid-template-columns:1fr}
+@media(min-width:640px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.grid-4{grid-template-columns:repeat(2,1fr)}
+@media(min-width:768px){.grid-4{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1024px){.grid-4{grid-template-columns:repeat(4,1fr)}}
+.card{background:rgba(26,26,46,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;transition:all .3s;cursor:pointer}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,245,212,0.08);border-color:rgba(0,245,212,0.3)}
+.glass-panel{background:rgba(26,26,46,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.5rem}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:.85rem;color:#9ca3af;margin-bottom:.4rem;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.65rem .85rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:.6rem;color:#f0f0f5;font-size:.9rem;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#00f5d4}
+.form-group select option{background:#1a1a2e;color:#f0f0f5}
+.form-group textarea{resize:vertical;min-height:80px}
+input[type="range"]{accent-color:#00f5d4;width:100%}
+.map-container{border-radius:1rem;overflow:hidden;border:2px solid rgba(0,245,212,0.3);padding:3px}
+.map-inner{width:100%;height:400px;border-radius:.6rem;overflow:hidden}
+footer{border-top:1px solid rgba(255,255,255,0.05);padding:1.5rem 1rem;text-align:center;color:#6b7280;font-size:.8rem}
+footer a{color:#00f5d4;text-decoration:none}
+.hidden{display:none!important}
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;padding:1rem}
+.modal.active{display:flex}
+.modal-content{background:#1a1a2e;border:1px solid rgba(0,245,212,0.3);border-radius:14px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{padding:1.25rem;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:#9ca3af;font-size:1.5rem;cursor:pointer}
+.modal-close:hover{color:#00f5d4}
+.modal-body{padding:1.25rem}
+.day-card{margin-bottom:.75rem;padding:.75rem;background:rgba(255,255,255,0.03);border-radius:.6rem;border-left:3px solid #00f5d4}
+.stop-item{padding:.5rem 0;border-left:2px solid rgba(0,245,212,0.3);padding-left:.75rem;margin-left:.4rem;margin-top:.4rem}
+.stop-actions{display:flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap}
+.stop-actions button{padding:3px 8px;font-size:.7rem;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#9ca3af}
+.stop-actions button:hover{background:rgba(0,245,212,0.1);color:#00f5d4}
+.search-box{position:relative;margin-bottom:1rem}
+.search-box input{width:100%;padding:.75rem 1rem .75rem 2.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:.75rem;color:#f0f0f5;font-size:.95rem}
+.search-box input:focus{outline:none;border-color:#00f5d4}
+.search-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:#6b7280;font-size:1rem}
+.filter-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.chip{padding:.4rem .75rem;border-radius:20px;font-size:.75rem;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#9ca3af;transition:all .2s}
+.chip:hover,.chip.active{background:rgba(0,245,212,0.1);border-color:#00f5d4;color:#00f5d4}
+.route-card{background:rgba(26,26,46,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1.25rem;cursor:pointer;transition:all .3s}
+.route-card:hover{transform:translateY(-3px);border-color:rgba(0,245,212,0.3);box-shadow:0 8px 25px rgba(0,245,212,0.08)}
+.place-img{width:100%;height:140px;border-radius:10px;background:linear-gradient(135deg,#1a1a2e,#2a2a4e);margin-bottom:.75rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;overflow:hidden;background-size:cover;background-position:center}
+.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;max-height:300px;overflow-y:auto;padding:.5rem}
+.checkbox-item{display:flex;align-items:center;gap:.5rem;padding:.5rem;border-radius:.5rem;background:rgba(255,255,255,0.03);cursor:pointer;transition:all .2s}
+.checkbox-item:hover{background:rgba(0,245,212,0.05)}
+.checkbox-item.selected{background:rgba(0,245,212,0.1);border:1px solid rgba(0,245,212,0.3)}
+.checkbox-item input{accent-color:#00f5d4}
+.category-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;overflow-x:auto;padding-bottom:.5rem}
+.category-tab{padding:.5rem 1rem;border-radius:20px;font-size:.85rem;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#9ca3af;white-space:nowrap;transition:all .2s}
+.category-tab:hover,.category-tab.active{background:rgba(0,245,212,0.1);border-color:#00f5d4;color:#00f5d4}
+/* Ненавязчивая реклама */
+.ad-block{background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:10px;padding:1rem;text-align:center;margin:2rem auto;max-width:600px}
+.ad-block p{color:rgba(255,255,255,0.25);font-size:.75rem;font-style:italic}
+.ad-block a{color:rgba(0,245,212,0.4);text-decoration:none;font-size:.75rem}
+.ad-block a:hover{color:#00f5d4}
+.budget-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;margin-left:.5rem}
+.budget-low{background:rgba(0,245,212,0.15);color:#00f5d4}
+.budget-medium{background:rgba(255,179,0,0.15);color:#ffb300}
+.budget-high{background:rgba(179,136,255,0.15);color:#b388ff}
+</style>
+</head>
+<body>
+<nav>
+<div class="container">
+<a class="logo" onclick="showPage('home')">🧠 TripMind</a>
+<div class="nav-links">
+<a onclick="showPage('home')" class="active" data-page="home">🏠 Главная</a>
+<a onclick="showPage('places')" data-page="places">🗺️ Места</a>
+<a onclick="showPage('routes')" data-page="routes">📋 Маршруты</a>
+<a onclick="showPage('builder')" data-page="builder">🛤️ Конструктор</a>
+<a onclick="showPage('map')" data-page="map">📍 Карта</a>
+<a onclick="showPage('ads')" data-page="ads">📢 Реклама</a>
+</div>
+<button class="burger" id="burger-btn" onclick="toggleMobile()"><span></span><span></span><span></span></button>
+</div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+<a onclick="showPage('home');closeMobile()" class="active" data-page="home">🏠 Главная</a>
+<a onclick="showPage('places');closeMobile()" data-page="places">🗺️ Места</a>
+<a onclick="showPage('routes');closeMobile()" data-page="routes">📋 Маршруты</a>
+<a onclick="showPage('builder');closeMobile()" data-page="builder">🛤️ Конструктор</a>
+<a onclick="showPage('map');closeMobile()" data-page="map">📍 Карта</a>
+<a onclick="showPage('ads');closeMobile()" data-page="ads">📢 Реклама</a>
+</div>
+
+<!-- ГЛАВНАЯ -->
+<div id="page-home" class="page active">
+<div class="hero">
+<div class="hero-content">
+<h1><span class="gradient-text">Trip</span><span>Mind</span></h1>
+<p>Умные маршруты по России. 450+ мест: отели, рестораны, кафе, фастфуд, достопримечательности — всё в одном месте.</p>
+<div class="hero-buttons">
+<button class="btn-primary" onclick="showPage('builder')">🧭 Собрать маршрут</button>
+<button class="btn-secondary" onclick="showPage('routes')">📋 Готовые маршруты</button>
+</div>
+</div>
+</div>
+<section>
+<div class="container">
+<h2 class="section-title">Возможности TripMind</h2>
+<div class="grid grid-3">
+<div class="card"><div style="font-size:2.5rem;margin-bottom:.75rem">🏨</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">Отели и кафе</h3><p style="color:#9ca3af;font-size:.85rem">Где остановиться и поесть в каждом городе</p></div>
+<div class="card"><div style="font-size:2.5rem;margin-bottom:.75rem">🗺️</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">150+ мест</h3><p style="color:#9ca3af;font-size:.85rem">Достопримечательности, рестораны, отели</p></div>
+<div class="card"><div style="font-size:2.5rem;margin-bottom:.75rem">🚗</div><h3 style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">Умный маршрут</h3><p style="color:#9ca3af;font-size:.85rem">Учитывает транспорт, время, бюджет</p></div>
+</div>
+<!-- Ненавязчивая реклама -->
+<div class="ad-block">
+<p>Здесь могла быть ваша реклама</p>
+<a href="#" onclick="showPage('ads');return false;">Разместить рекламу →</a>
+</div>
+</div>
+</section>
+</div>
+
+<!-- МЕСТА -->
+<div id="page-places" class="page">
+<div class="container" style="padding-top:1.5rem;padding-bottom:2rem">
+<h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.5rem">🗺️ Все места</h1>
+<p style="color:#9ca3af;margin-bottom:1.5rem">Достопримечательности, отели, рестораны, кафе, фастфуд — 450+ мест по всей России</p>
+<div class="search-box"><span class="search-icon">🔍</span><input type="text" id="search-places" placeholder="Поиск..."></div>
+<div class="filter-chips" id="city-filters"></div>
+<div class="category-tabs" id="category-tabs"></div>
+<div id="places-grid" class="grid grid-4"></div>
+<p id="places-count" style="color:#6b7280;font-size:.85rem;margin-top:1rem;text-align:center"></p>
+</div>
+</div>
+
+<!-- МАРШРУТЫ -->
+<div id="page-routes" class="page">
+<div class="container" style="padding-top:1.5rem;padding-bottom:2rem">
+<h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.5rem">📋 Готовые маршруты</h1>
+<div id="routes-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem"></div>
+</div>
+</div>
+
+<!-- КОНСТРУКТОР -->
+<div id="page-builder" class="page">
+<div class="container" style="padding-top:1.5rem;padding-bottom:2rem;max-width:900px">
+<h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.5rem;text-align:center">🛤️ Конструктор</h1>
+<div id="builder-form" class="glass-panel">
+<div class="form-group"><label>📍 Регион</label><select id="input-region" onchange="onRegionChange()"><option value="">Все регионы</option></select></div>
+<div class="form-group"><label>📅 Дата</label><input type="date" id="input-date"></div>
+<div class="form-group"><label>🗓️ Дней: <span id="days-value">3</span></label><input type="range" id="input-days" min="1" max="14" value="3"></div>
+<div class="form-group"><label>⚡ Темп</label><select id="input-pace"><option value="relaxed">🐢 Спокойный</option><option value="normal" selected>🚶 Средний</option><option value="intensive">🏃 Насыщенный</option></select></div>
+<div class="form-group"><label>💰 Бюджет</label><select id="input-budget"><option value="low">💰 Эконом</option><option value="medium" selected>💰💰 Средний</option><option value="high">💰💰💰 Премиум</option></select></div>
+<div class="form-group"><label>🚗 Транспорт</label><select id="input-transport"><option value="car" selected>🚗 Авто</option><option value="walk">🚶 Пешком</option><option value="public">🚌 Общ.</option></select></div>
+<div class="form-group"><label>🚉 Начальная точка</label><select id="input-start"><option value="auto">🚗 Автовокзал</option><option value="train">🚂 Ж/Д вокзал</option><option value="plane">✈️ Аэропорт</option></select></div>
+<div class="form-group"><label>❤️ Категории</label><div id="interests-grid" style="display:flex;flex-wrap:wrap;gap:.4rem"></div></div>
+<div class="form-group">
+<label id="places-label">📍 Выберите места</label>
+<div class="search-box" style="margin-bottom:.5rem"><span class="search-icon">🔍</span><input type="text" id="place-search" placeholder="Поиск..."></div>
+<div id="place-checkboxes" class="checkbox-grid"></div>
+<p id="selected-count" style="color:#00f5d4;font-size:.85rem;margin-top:.5rem"></p>
+</div>
+<button class="btn-primary" style="width:100%;margin-top:1rem" onclick="generateRoute()">✨ Сгенерировать</button>
+</div>
+<div id="route-result" class="hidden" style="margin-top:1.5rem">
+<div class="glass-panel" style="margin-bottom:1rem">
+<h2 id="result-title" style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem"></h2>
+<p id="result-overview" style="color:#9ca3af;margin-bottom:.75rem;font-size:.9rem"></p>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+<div style="background:rgba(0,245,212,0.1);padding:.4rem .75rem;border-radius:.4rem"><span style="color:#00f5d4;font-weight:700" id="result-score"></span><span style="color:#9ca3af;font-size:.8rem"> совпадение</span></div>
+<div style="background:rgba(179,136,255,0.1);padding:.4rem .75rem;border-radius:.4rem"><span style="color:#b388ff;font-weight:700" id="result-stops"></span><span style="color:#9ca3af;font-size:.8rem"> точек</span></div>
+<div style="background:rgba(255,179,0,0.1);padding:.4rem .75rem;border-radius:.4rem"><span style="color:#ffb300;font-weight:700" id="result-distance"></span><span style="color:#9ca3af;font-size:.8rem"> км</span></div>
+</div>
+</div>
+<div class="map-container" style="margin-bottom:1rem"><div id="result-map" class="map-inner"></div></div>
+<div id="result-timeline" class="glass-panel" style="margin-bottom:1rem"></div>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center">
+<a id="open-yandex" href="#" target="_blank" class="btn-primary">🗺️ Яндекс Карты</a>
+<button class="btn-secondary" onclick="resetBuilder()">🔄 Перестроить</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- КАРТА -->
+<div id="page-map" class="page">
+<div class="container" style="padding-top:1.5rem;padding-bottom:2rem">
+<h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.5rem">📍 Карта</h1>
+<div class="map-container"><div id="main-map" class="map-inner" style="height:600px"></div></div>
+</div>
+</div>
+
+<!-- РЕКЛАМА -->
+<div id="page-ads" class="page">
+<div class="container" style="padding-top:1.5rem;padding-bottom:2rem;max-width:700px">
+<h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.5rem">📢 Разместите рекламу</h1>
+<p style="color:#9ca3af;margin-bottom:1.5rem">Ваш отель, ресторан или кафе в наших маршрутах</p>
+<div class="glass-panel" style="margin-bottom:1.5rem">
+<h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">💡 Как это работает</h2>
+<ul style="color:#9ca3af;padding-left:1.5rem;line-height:2;font-size:.9rem">
+<li>Вы оставляете заявку с данными вашего заведения</li>
+<li>Мы добавляем его в базу TripMind</li>
+<li>AI-конструктор включает ваше заведение в маршруты</li>
+<li>Пользователи видят вас при планировании путешествий</li>
+</ul>
+</div>
+<div class="glass-panel" style="margin-bottom:1.5rem">
+<h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">📝 Оставить заявку</h2>
+<div class="form-group"><label>Название заведения</label><input type="text" id="ad-name" placeholder="Отель «Байкал»"></div>
+<div class="form-group"><label>Тип</label><select id="ad-type"><option value="hotel">🏨 Отель</option><option value="cafe">☕ Кафе</option><option value="restaurant">🍽️ Ресторан</option></select></div>
+<div class="form-group"><label>Город</label><input type="text" id="ad-city" placeholder="Иркутск"></div>
+<div class="form-group"><label>Адрес</label><input type="text" id="ad-address" placeholder="ул. Байкальская, 15"></div>
+<div class="form-group"><label>Координаты (широта, долгота)</label><input type="text" id="ad-coords" placeholder="52.29, 104.30"></div>
+<div class="form-group"><label>Описание</label><textarea id="ad-desc" placeholder="Расскажите о вашем заведении..."></textarea></div>
+<div class="form-group"><label>Ваш Telegram</label><input type="text" id="ad-tg" placeholder="@username"></div>
+<button class="btn-primary" style="width:100%" onclick="submitAd()">📨 Отправить заявку</button>
+</div>
+<div class="glass-panel">
+<h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">📞 Связаться напрямую</h2>
+<p style="color:#9ca3af;font-size:.9rem;margin-bottom:.5rem">Telegram:</p>
+<a href="https://t.me/rizeeee3" target="_blank" class="btn-primary" style="display:inline-block">@rizeeee3</a>
+</div>
+</div>
+</div>
+
+<!-- МОДАЛКА -->
+<div id="place-modal" class="modal">
+<div class="modal-content">
+<div class="modal-header"><h3 id="modal-title" style="font-size:1.2rem;font-weight:700"></h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+<div class="modal-body">
+<div id="modal-img" style="width:100%;height:150px;border-radius:10px;background:linear-gradient(135deg,#1a1a2e,#2a2a4e);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;font-size:4rem"></div>
+<div id="modal-info" style="margin-bottom:1rem;color:#9ca3af;font-size:.9rem"></div>
+<div class="map-container"><div id="modal-map" class="map-inner"></div></div>
+<div style="margin-top:1rem;text-align:center"><a id="modal-yandex-link" href="#" target="_blank" class="btn-primary">🗺️ Открыть в Яндекс Картах</a></div>
+</div>
+</div>
+</div>
+
+<footer><div class="container"><p>© 2026 <a href="http://vnutreniy-kontur.ru/">TripMind</a></p><p style="margin-top:.3rem">Сделано с ❤️ • <a href="https://t.me/rizeeee3" target="_blank">@rizeeee3</a></p></div></footer>
+
+<script>
+const regions=[{id:'r1',name:'Карелия',slug:'karelia'},{id:'r2',name:'Алтай',slug:'altai'},{id:'r3',name:'Байкал',slug:'baikal'},{id:'r4',name:'Камчатка',slug:'kamchatka'},{id:'r5',name:'Краснодарский край',slug:'krasnodar'},{id:'r6',name:'Крым',slug:'crimea'},{id:'r7',name:'Золотое кольцо',slug:'golden-ring'},{id:'r8',name:'Санкт-Петербург',slug:'spb'},{id:'r9',name:'Татарстан',slug:'tatarstan'},{id:'r10',name:'Москва',slug:'moscow'},{id:'r11',name:'Урал',slug:'ural'},{id:'r12',name:'Дагестан',slug:'dagestan'},{id:'r13',name:'Мурманская область',slug:'murmansk'},{id:'r14',name:'Калининград',slug:'kaliningrad'},{id:'r15',name:'Приморский край',slug:'primorie'}];
+const catEmoji={nature:'🌲',history:'📜',museum:'🏛️',food:'🍽️',activity:'🏃',architecture:'🏛️',viewpoint:'🏔️',spiritual:'⛪',beach:'🏖️',hotel:'🏨',cafe:'☕',restaurant:'🍽️',transport:'🚉',fastfood:'🍔',bakery:'🥐',dessert:'🍦'};
+
+// Реальные фотографии достопримечательностей (Unsplash)
+const placePhotos={
+// Санкт-Петербург
+'p1':'https://images.unsplash.com/photo-1556610961-2fecc5927173?w=400', // Эрмитаж
+'p2':'https://images.unsplash.com/photo-1553708881-1b9abf82a968?w=400', // Петергоф
+'p3':'https://images.unsplash.com/photo-1556610961-2fecc5927173?w=400', // Исаакиевский
+// Москва
+'p4':'https://images.unsplash.com/photo-1513326738677-b964603b136d?w=400', // Красная площадь
+'p5':'https://images.unsplash.com/photo-1513326738677-b964603b136d?w=400', // Третьяковка
+'p6':'https://images.unsplash.com/photo-1513326738677-b964603b136d?w=400', // Воробьёвы горы
+// Казань
+'p7':'https://images.unsplash.com/photo-1596484552834-6a58f8a0e0a1?w=400', // Казанский кремль
+// Байкал
+'p8':'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=400', // Ольхон
+'p9':'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=400', // Листвянка
+// Золотое кольцо
+'p10':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Суздаль
+'p11':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Троице-Сергиева
+// Карелия
+'p12':'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=400', // Рускеала
+'p13':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Кижи
+// Алтай
+'p14':'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400', // Чемальская ГЭС
+'p15':'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400', // Телецкое озеро
+// Камчатка
+'p16':'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400', // Долина гейзеров
+// Сочи
+'p17':'https://images.unsplash.com/photo-1551524559-8af4e6624178?w=400', // Роза Хутор
+// Крым
+'p18':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Ливадийский
+// Дагестан
+'p19':'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400', // Сулакский каньон
+// Мурманск
+'p20':'https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=400', // Териберка
+// Калининград
+'p21':'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', // Куршская коса
+// Урал
+'p22':'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400', // Таганай
+// Приморье
+'p23':'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', // Бухта Золотой Рог
+// Дагестан
+'p24':'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400', // Дербент
+// Золотое кольцо
+'p25':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Владимирский собор
+'p26':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Ярославский кремль
+'p27':'https://images.unsplash.com/photo-1596484552834-6a58f8a0e0a1?w=400', // Свияжск
+'p28':'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=400', // Аркаим
+// Карелия
+'p29':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400', // Валаам
+// Крым
+'p30':'https://images.unsplash.com/photo-1548834925-e48f8a27ae50?w=400' // Херсонес
+};
+const catLabels={nature:'Природа',history:'История',museum:'Музеи',food:'Еда',activity:'Актив',architecture:'Архитектура',viewpoint:'Виды',spiritual:'Духовное',beach:'Пляжи',hotel:'Отели',cafe:'Кафе',restaurant:'Рестораны',transport:'Транспорт',fastfood:'Фастфуд',bakery:'Пекарни',dessert:'Десерты'};
+const budgetLabels={low:'💰 Эконом',medium:'💰💰 Средний',high:'💰💰💰 Премиум'};
+
+const places=[
+// ТРАНСПОРТ (вокзалы/аэропорты)
+{id:'t1',n:'Аэропорт Пулково',r:'r8',c:'Санкт-Петербург',lat:59.80,lon:30.27,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t2',n:'Московский вокзал',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.36,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t3',n:'Аэропорт Шереметьево',r:'r10',c:'Москва',lat:55.97,lon:37.41,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t4',n:'Казанский вокзал',r:'r10',c:'Москва',lat:55.77,lon:37.65,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t5',n:'Аэропорт Казань',r:'r9',c:'Казань',lat:55.61,lon:49.28,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t6',n:'Ж/Д вокзал Казань',r:'r9',c:'Казань',lat:55.79,lon:49.12,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t7',n:'Аэропорт Сочи',r:'r5',c:'Сочи',lat:43.45,lon:39.95,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t8',n:'Аэропорт Иркутск',r:'r3',c:'Иркутск',lat:52.27,lon:104.39,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t9',n:'Аэропорт Мурманск',r:'r13',c:'Мурманск',lat:68.78,lon:32.75,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t10',n:'Аэропорт Калининград',r:'r14',c:'Калининград',lat:54.89,lon:20.59,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+
+// ОТЕЛИ
+{id:'h1',n:'Отель «Астория»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.32,cat:'hotel',tags:['5звёзд','центр'],b:'high',icon:'🏨'},
+{id:'h2',n:'Хостел «Мини-отель»',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h3',n:'Отель «Националь»',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'hotel',tags:['5звёзд','центр'],b:'high',icon:'🏨'},
+{id:'h4',n:'Измайлово Отель',r:'r10',c:'Москва',lat:55.80,lon:37.75,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h5',n:'Отель «Шаляпин Палас»',r:'r9',c:'Казань',lat:55.79,lon:49.12,cat:'hotel',tags:['5звёзд','центр'],b:'high',icon:'🏨'},
+{id:'h6',n:'Отель «Байкал»',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h7',n:'Отель «Ривьера»',r:'r5',c:'Сочи',lat:43.58,lon:39.73,cat:'hotel',tags:['море'],b:'medium',icon:'🏨'},
+{id:'h8',n:'Мини-отель «Ялта»',r:'r6',c:'Ялта',lat:44.50,lon:34.16,cat:'hotel',tags:['море'],b:'medium',icon:'🏨'},
+{id:'h9',n:'Отель «Териберка»',r:'r13',c:'Териберка',lat:69.16,lon:35.13,cat:'hotel',tags:['север'],b:'medium',icon:'🏨'},
+{id:'h10',n:'Отель «Калининград»',r:'r14',c:'Калининград',lat:54.71,lon:20.51,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+
+// КАФЕ И РЕСТОРАНЫ
+{id:'c1',n:'Кафе «Пышечная»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.33,cat:'cafe',tags:['быстро','бюджетно'],b:'low',icon:'☕'},
+{id:'c2',n:'Ресторан «Мезонин»',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'restaurant',tags:['русская кухня'],b:'high',icon:'🍽️'},
+{id:'c3',n:'Кафе «Дом Бублика»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.34,cat:'cafe',tags:['завтраки'],b:'low',icon:'🥐'},
+{id:'c4',n:'Ресторан «Пушкин»',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'restaurant',tags:['русская кухня'],b:'high',icon:'🍽️'},
+{id:'c5',n:'Кафе «Кофемания»',r:'r10',c:'Москва',lat:55.75,lon:37.62,cat:'cafe',tags:['кофе','завтраки'],b:'medium',icon:'☕'},
+{id:'c6',n:'Ресторан «Тубэтэй»',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'restaurant',tags:['татарская кухня'],b:'medium',icon:'🍽️'},
+{id:'c7',n:'Чайхана «Навруз»',r:'r9',c:'Казань',lat:55.78,lon:49.12,cat:'restaurant',tags:['восточная кухня'],b:'medium',icon:'🍽️'},
+{id:'c8',n:'Кафе «Байкал»',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'cafe',tags:['омуль','байкал'],b:'medium',icon:'🐟'},
+{id:'c9',n:'Ресторан «Огонёк»',r:'r3',c:'Листвянка',lat:51.85,lon:104.85,cat:'restaurant',tags:['рыба','байкал'],b:'medium',icon:'🍽️'},
+{id:'c10',n:'Кафе «У моря»',r:'r5',c:'Сочи',lat:43.58,lon:39.73,cat:'cafe',tags:['море','рыба'],b:'medium',icon:'🍽️'},
+{id:'c11',n:'Ресторан «Кавказ»',r:'r12',c:'Махачкала',lat:42.98,lon:47.50,cat:'restaurant',tags:['кавказская кухня'],b:'medium',icon:'🍽️'},
+{id:'c12',n:'Кафе «Северное»',r:'r13',c:'Мурманск',lat:68.97,lon:33.07,cat:'cafe',tags:['северная кухня'],b:'medium',icon:'☕'},
+
+// ДОСТОПРИМЕЧАТЕЛЬНОСТИ (сокращённо)
+{id:'p1',n:'Эрмитаж',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.31,cat:'museum',tags:['музей','юнеско'],b:'medium',icon:'🏛️',img:'https://images.unsplash.com/photo-1556610961-2fecc5927173?w=400'},
+{id:'p2',n:'Петергоф',r:'r8',c:'Петергоф',lat:59.89,lon:29.92,cat:'architecture',tags:['фонтаны'],b:'medium',icon:'⛲'},
+{id:'p3',n:'Исаакиевский собор',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.31,cat:'architecture',tags:['собор'],b:'low',icon:'⛪'},
+{id:'p4',n:'Красная площадь',r:'r10',c:'Москва',lat:55.75,lon:37.62,cat:'history',tags:['юнеско'],b:'low',icon:'🏛️'},
+{id:'p5',n:'Третьяковская галерея',r:'r10',c:'Москва',lat:55.74,lon:37.62,cat:'museum',tags:['искусство'],b:'medium',icon:'🏛️'},
+{id:'p6',n:'Воробьёвы горы',r:'r10',c:'Москва',lat:55.71,lon:37.54,cat:'viewpoint',tags:['панорама'],b:'low',icon:'🌅'},
+{id:'p7',n:'Казанский кремль',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p8',n:'Остров Ольхон',r:'r3',c:'Иркутск',lat:53.1,lon:107.4,cat:'nature',tags:['байкал'],b:'medium',icon:'🏝️'},
+{id:'p9',n:'Листвянка',r:'r3',c:'Иркутск',lat:51.85,lon:104.85,cat:'food',tags:['омуль'],b:'medium',icon:'🐟'},
+{id:'p10',n:'Суздальский кремль',r:'r7',c:'Суздаль',lat:56.42,lon:40.45,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p11',n:'Троице-Сергиева Лавра',r:'r7',c:'Сергиев Посад',lat:56.31,lon:38.13,cat:'spiritual',tags:['монастырь'],b:'low',icon:'⛪'},
+{id:'p12',n:'Рускеала',r:'r1',c:'Сортавала',lat:61.83,lon:30.63,cat:'nature',tags:['каньон'],b:'low',icon:'🏞️'},
+{id:'p13',n:'Остров Кижи',r:'r1',c:'Петрозаводск',lat:62.07,lon:35.17,cat:'history',tags:['юнеско'],b:'medium',icon:'🏝️'},
+{id:'p14',n:'Чемальская ГЭС',r:'r2',c:'Чемал',lat:51.32,lon:85.58,cat:'nature',tags:['гэс'],b:'low',icon:'💧'},
+{id:'p15',n:'Телецкое озеро',r:'r2',c:'Артыбаш',lat:51.63,lon:87.63,cat:'nature',tags:['озеро'],b:'medium',icon:'🏞️'},
+{id:'p16',n:'Долина гейзеров',r:'r4',c:'Петропавловск',lat:54.46,lon:159.97,cat:'nature',tags:['гейзеры'],b:'high',icon:'🌋'},
+{id:'p17',n:'Роза Хутор',r:'r5',c:'Сочи',lat:43.67,lon:40.3,cat:'activity',tags:['горы'],b:'high',icon:'⛷️'},
+{id:'p18',n:'Ливадийский дворец',r:'r6',c:'Ялта',lat:44.47,lon:34.12,cat:'architecture',tags:['дворец'],b:'low',icon:'🏰'},
+{id:'p19',n:'Сулакский каньон',r:'r12',c:'Махачкала',lat:42.65,lon:46.85,cat:'nature',tags:['каньон'],b:'medium',icon:'🏞️'},
+{id:'p20',n:'Териберка',r:'r13',c:'Мурманск',lat:69.16,lon:35.13,cat:'nature',tags:['океан'],b:'low',icon:'🌊'},
+{id:'p21',n:'Куршская коса',r:'r14',c:'Калининград',lat:55.2,lon:20.9,cat:'nature',tags:['юнеско'],b:'medium',icon:'🏖️'},
+{id:'p22',n:'Таганай',r:'r11',c:'Челябинск',lat:55.45,lon:59.95,cat:'nature',tags:['скалы'],b:'low',icon:'🏔️'},
+{id:'p23',n:'Бухта Золотой Рог',r:'r15',c:'Владивосток',lat:43.12,lon:131.9,cat:'viewpoint',tags:['бухта'],b:'low',icon:'🌅'},
+{id:'p24',n:'Дербент',r:'r12',c:'Дербент',lat:42.07,lon:48.29,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p25',n:'Владимирский Успенский собор',r:'r7',c:'Владимир',lat:56.13,lon:40.41,cat:'architecture',tags:['юнеско'],b:'low',icon:'⛪'},
+{id:'p26',n:'Ярославский кремль',r:'r7',c:'Ярославль',lat:57.62,lon:39.85,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p27',n:'Свияжск',r:'r9',c:'Свияжск',lat:55.77,lon:48.66,cat:'history',tags:['остров'],b:'low',icon:'🏝️'},
+{id:'p28',n:'Аркаим',r:'r11',c:'Челябинск',lat:52.65,lon:59.58,cat:'history',tags:['городище'],b:'low',icon:'🏛️'},
+{id:'p29',n:'Валаам',r:'r1',c:'Сортавала',lat:61.38,lon:30.95,cat:'spiritual',tags:['монастырь'],b:'medium',icon:'⛪'},
+{id:'p30',n:'Херсонес',r:'r6',c:'Севастополь',lat:44.61,lon:33.53,cat:'history',tags:['юнеско'],b:'low',icon:'🏛️'},
+// ДОПОЛНИТЕЛЬНЫЕ ДОСТОПРИМЕЧАТЕЛЬНОСТИ (100+)
+{id:'p31',n:'Соловецкие острова',r:'r1',c:'Архангельск',lat:65.0,lon:35.5,cat:'spiritual',tags:['юнеско','монастырь'],b:'high',icon:'⛪'},
+{id:'p32',n:'Водопад Кивач',r:'r1',c:'Петрозаводск',lat:62.28,lon:33.99,cat:'nature',tags:['водопад'],b:'low',icon:'💧'},
+{id:'p33',n:'Марциальные воды',r:'r1',c:'Петрозаводск',lat:62.15,lon:34.05,cat:'nature',tags:['источник'],b:'low',icon:'💧'},
+{id:'p34',n:'Гора Белуха',r:'r2',c:'Усть-Кокса',lat:49.81,lon:86.59,cat:'activity',tags:['вершина'],b:'high',icon:'🏔️'},
+{id:'p35',n:'Каракольские озёра',r:'r2',c:'Чемал',lat:51.0,lon:86.2,cat:'nature',tags:['озёра'],b:'low',icon:'🏞️'},
+{id:'p36',n:'Плато Укок',r:'r2',c:'Кош-Агач',lat:49.5,lon:88.5,cat:'nature',tags:['плато'],b:'high',icon:'🏔️'},
+{id:'p37',n:'Чуйский тракт',r:'r2',c:'Бийск',lat:52.0,lon:85.5,cat:'viewpoint',tags:['трасса'],b:'low',icon:'🛣️'},
+{id:'p38',n:'Бухта Песчаная',r:'r3',c:'Иркутск',lat:52.5,lon:106.0,cat:'nature',tags:['бухта'],b:'medium',icon:'🏖️'},
+{id:'p39',n:'Мыс Хобой',r:'r3',c:'Иркутск',lat:53.5,lon:107.5,cat:'viewpoint',tags:['мыс'],b:'medium',icon:'🌅'},
+{id:'p40',n:'Баргузинский заповедник',r:'r3',c:'Северобайкальск',lat:53.8,lon:108.8,cat:'nature',tags:['заповедник'],b:'medium',icon:'🌲'},
+{id:'p41',n:'Вулкан Ключевская',r:'r4',c:'Петропавловск',lat:56.06,lon:160.64,cat:'activity',tags:['вулкан'],b:'high',icon:'🌋'},
+{id:'p42',n:'Авачинская бухта',r:'r4',c:'Петропавловск',lat:53.03,lon:158.65,cat:'nature',tags:['бухта'],b:'medium',icon:'🌊'},
+{id:'p43',n:'Халактырский пляж',r:'r4',c:'Петропавловск',lat:53.15,lon:158.75,cat:'beach',tags:['пляж'],b:'low',icon:'🏖️'},
+{id:'p44',n:'Абрау-Дюрсо',r:'r5',c:'Новороссийск',lat:44.66,lon:37.87,cat:'food',tags:['вино'],b:'medium',icon:'🍷'},
+{id:'p45',n:'33 водопада',r:'r5',c:'Сочи',lat:43.85,lon:39.65,cat:'nature',tags:['водопады'],b:'low',icon:'💧'},
+{id:'p46',n:'Озеро Кардывач',r:'r5',c:'Сочи',lat:43.65,lon:40.45,cat:'nature',tags:['озеро'],b:'medium',icon:'🏞️'},
+{id:'p47',n:'Красная Поляна',r:'r5',c:'Сочи',lat:43.68,lon:40.2,cat:'activity',tags:['горы'],b:'high',icon:'🏔️'},
+{id:'p48',n:'Гора Ай-Петри',r:'r6',c:'Ялта',lat:44.46,lon:34.05,cat:'viewpoint',tags:['канатка'],b:'low',icon:'🏔️'},
+{id:'p49',n:'Генуэзская крепость',r:'r6',c:'Судак',lat:44.85,lon:34.96,cat:'history',tags:['крепость'],b:'low',icon:'🏰'},
+{id:'p50',n:'Балаклава',r:'r6',c:'Севастополь',lat:44.52,lon:33.6,cat:'history',tags:['бухта'],b:'low',icon:'🏝️'},
+{id:'p51',n:'Мыс Фиолент',r:'r6',c:'Севастополь',lat:44.55,lon:33.5,cat:'nature',tags:['мыс'],b:'low',icon:'🌅'},
+{id:'p52',n:'Ханский дворец',r:'r6',c:'Бахчисарай',lat:44.75,lon:33.86,cat:'history',tags:['дворец'],b:'low',icon:'🏰'},
+{id:'p53',n:'Воронцовский дворец',r:'r6',c:'Ялта',lat:44.49,lon:34.15,cat:'architecture',tags:['дворец'],b:'low',icon:'🏰'},
+{id:'p54',n:'Ростовский кремль',r:'r7',c:'Ростов',lat:57.18,lon:39.42,cat:'architecture',tags:['кремль'],b:'low',icon:'🏰'},
+{id:'p55',n:'Ярославский кремль',r:'r7',c:'Ярославль',lat:57.62,lon:39.85,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p56',n:'Костромской кремль',r:'r7',c:'Кострома',lat:57.77,lon:40.93,cat:'history',tags:['кремль'],b:'low',icon:'🏰'},
+{id:'p57',n:'Плещеево озеро',r:'r7',c:'Переславль',lat:56.75,lon:38.85,cat:'nature',tags:['озеро'],b:'low',icon:'🏞️'},
+{id:'p58',n:'Угличский кремль',r:'r7',c:'Углич',lat:57.53,lon:38.32,cat:'history',tags:['кремль'],b:'low',icon:'🏰'},
+{id:'p59',n:'Александровская слобода',r:'r7',c:'Александров',lat:56.4,lon:38.73,cat:'history',tags:['дворец'],b:'low',icon:'🏰'},
+{id:'p60',n:'Селигер',r:'r7',c:'Осташков',lat:57.2,lon:33.0,cat:'nature',tags:['озеро'],b:'low',icon:'🏞️'},
+{id:'p61',n:'Великий Устюг',r:'r7',c:'Великий Устюг',lat:60.76,lon:46.31,cat:'history',tags:['Дед Мороз'],b:'low',icon:'🎅'},
+{id:'p62',n:'Царское Село',r:'r8',c:'Пушкин',lat:59.72,lon:30.4,cat:'architecture',tags:['дворец'],b:'medium',icon:'🏰'},
+{id:'p63',n:'Петропавловская крепость',r:'r8',c:'Санкт-Петербург',lat:59.95,lon:30.32,cat:'history',tags:['крепость'],b:'low',icon:'🏰'},
+{id:'p64',n:'Русский музей',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'museum',tags:['искусство'],b:'medium',icon:'🏛️'},
+{id:'p65',n:'Казанский собор',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.32,cat:'architecture',tags:['собор'],b:'low',icon:'⛪'},
+{id:'p66',n:'Спас на Крови',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'architecture',tags:['собор'],b:'low',icon:'⛪'},
+{id:'p67',n:'Павловск',r:'r8',c:'Павловск',lat:59.68,lon:30.45,cat:'architecture',tags:['дворец'],b:'medium',icon:'🏰'},
+{id:'p68',n:'Гатчина',r:'r8',c:'Гатчина',lat:59.56,lon:30.13,cat:'architecture',tags:['дворец'],b:'medium',icon:'🏰'},
+{id:'p69',n:'Кронштадт',r:'r8',c:'Кронштадт',lat:60.0,lon:29.77,cat:'history',tags:['остров'],b:'low',icon:'🏝️'},
+{id:'p70',n:'Свияжск',r:'r9',c:'Свияжск',lat:55.77,lon:48.66,cat:'history',tags:['остров'],b:'low',icon:'🏝️'},
+{id:'p71',n:'Болгар',r:'r9',c:'Болгар',lat:54.96,lon:49.03,cat:'history',tags:['юнеско'],b:'low',icon:'🏰'},
+{id:'p72',n:'Раифский монастырь',r:'r9',c:'Казань',lat:55.95,lon:48.75,cat:'spiritual',tags:['монастырь'],b:'low',icon:'⛪'},
+{id:'p73',n:'Храм всех религий',r:'r9',c:'Казань',lat:55.73,lon:49.05,cat:'architecture',tags:['храм'],b:'low',icon:'⛪'},
+{id:'p74',n:'Парк Зарядье',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'nature',tags:['парк'],b:'low',icon:'🌳'},
+{id:'p75',n:'ВДНХ',r:'r10',c:'Москва',lat:55.83,lon:37.63,cat:'architecture',tags:['павильоны'],b:'low',icon:'🏛️'},
+{id:'p76',n:'Коломенское',r:'r10',c:'Москва',lat:55.67,lon:37.67,cat:'history',tags:['музей'],b:'low',icon:'🏰'},
+{id:'p77',n:'Парк Горького',r:'r10',c:'Москва',lat:55.73,lon:37.60,cat:'nature',tags:['парк'],b:'low',icon:'🌳'},
+{id:'p78',n:'Царицыно',r:'r10',c:'Москва',lat:55.61,lon:37.69,cat:'architecture',tags:['дворец'],b:'low',icon:'🏰'},
+{id:'p79',n:'Москва-Сити',r:'r10',c:'Москва',lat:55.75,lon:37.54,cat:'viewpoint',tags:['небоскрёбы'],b:'medium',icon:'🏙️'},
+{id:'p80',n:'Храм Христа Спасителя',r:'r10',c:'Москва',lat:55.74,lon:37.60,cat:'architecture',tags:['собор'],b:'low',icon:'⛪'},
+{id:'p81',n:'Большой театр',r:'r10',c:'Москва',lat:55.76,lon:37.62,cat:'architecture',tags:['театр'],b:'medium',icon:'🎭'},
+{id:'p82',n:'Арбат',r:'r10',c:'Москва',lat:55.75,lon:37.59,cat:'history',tags:['улица'],b:'low',icon:'🚶'},
+{id:'p83',n:'Таганай',r:'r11',c:'Челябинск',lat:55.45,lon:59.95,cat:'nature',tags:['скалы'],b:'low',icon:'🏔️'},
+{id:'p84',n:'Аркаим',r:'r11',c:'Челябинск',lat:52.65,lon:59.58,cat:'history',tags:['городище'],b:'low',icon:'🏛️'},
+{id:'p85',n:'Озеро Тургояк',r:'r11',c:'Миасс',lat:55.4,lon:60.1,cat:'nature',tags:['озеро'],b:'low',icon:'🏞️'},
+{id:'p86',n:'Гора Иремель',r:'r11',c:'Белорецк',lat:54.5,lon:58.5,cat:'nature',tags:['гора'],b:'low',icon:'🏔️'},
+{id:'p87',n:'Озеро Зюраткуль',r:'r11',c:'Сатка',lat:54.9,lon:59.5,cat:'nature',tags:['озеро'],b:'low',icon:'🏞️'},
+{id:'p88',n:'Тобольский кремль',r:'r11',c:'Тобольск',lat:58.2,lon:68.25,cat:'history',tags:['кремль'],b:'low',icon:'🏰'},
+{id:'p89',n:'Шульган-Таш',r:'r11',c:'Уфа',lat:54.5,lon:57.5,cat:'nature',tags:['пещера'],b:'low',icon:'🕳️'},
+{id:'p90',n:'Гора Шалбуздаг',r:'r12',c:'Махачкала',lat:41.55,lon:48.33,cat:'activity',tags:['вершина'],b:'high',icon:'🏔️'},
+{id:'p91',n:'Гамсутль',r:'r12',c:'Гуниб',lat:42.3,lon:46.8,cat:'history',tags:['аул'],b:'low',icon:'🏘️'},
+{id:'p92',n:'Чиркейское водохранилище',r:'r12',c:'Махачкала',lat:42.8,lon:47.0,cat:'nature',tags:['водохранилище'],b:'low',icon:'🏞️'},
+{id:'p93',n:'Ловозеро',r:'r13',c:'Ловозеро',lat:68.04,lon:35.03,cat:'nature',tags:['озеро'],b:'medium',icon:'🏞️'},
+{id:'p94',n:'Хибины',r:'r13',c:'Кировск',lat:67.61,lon:33.67,cat:'activity',tags:['горы'],b:'medium',icon:'🏔️'},
+{id:'p95',n:'Сейдозеро',r:'r13',c:'Ловозеро',lat:67.9,lon:35.5,cat:'nature',tags:['озеро'],b:'medium',icon:'🏞️'},
+{id:'p96',n:'Кафедральный собор',r:'r14',c:'Калининград',lat:54.71,lon:20.51,cat:'architecture',tags:['собор'],b:'low',icon:'⛪'},
+{id:'p97',n:'Светлогорск',r:'r14',c:'Светлогорск',lat:54.94,lon:20.07,cat:'beach',tags:['курорт'],b:'medium',icon:'🏖️'},
+{id:'p98',n:'Зеленоградск',r:'r14',c:'Зеленоградск',lat:54.96,lon:20.48,cat:'beach',tags:['курорт'],b:'medium',icon:'🏖️'},
+{id:'p99',n:'Остров Русский',r:'r15',c:'Владивосток',lat:43.0,lon:131.9,cat:'nature',tags:['остров'],b:'low',icon:'🏝️'},
+{id:'p100',n:'Мост на остров Русский',r:'r15',c:'Владивосток',lat:43.0,lon:131.9,cat:'architecture',tags:['мост'],b:'low',icon:'🌉'},
+// ЕЩЁ БОЛЬШЕ ОТЕЛЕЙ (40+)
+{id:'h11',n:'Отель «Карелия»',r:'r1',c:'Петрозаводск',lat:61.79,lon:34.34,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h12',n:'Гостевой дом «Рускеала»',r:'r1',c:'Сортавала',lat:61.70,lon:30.70,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h13',n:'Отель «Алтай Резорт»',r:'r2',c:'Чемал',lat:51.32,lon:85.58,cat:'hotel',tags:['горы'],b:'high',icon:'🏨'},
+{id:'h14',n:'База отдыха «Телецкое»',r:'r2',c:'Артыбаш',lat:51.63,lon:87.63,cat:'hotel',tags:['озеро'],b:'medium',icon:'🏨'},
+{id:'h15',n:'Отель «Байкал»',r:'r3',c:'Листвянка',lat:51.85,lon:104.85,cat:'hotel',tags:['озеро'],b:'medium',icon:'🏨'},
+{id:'h16',n:'Отель «Иркутск»',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h17',n:'Камчатка Тур Отель',r:'r4',c:'Петропавловск',lat:53.04,lon:158.65,cat:'hotel',tags:['вулканы'],b:'high',icon:'🏨'},
+{id:'h18',n:'Отель «Жемчужина»',r:'r5',c:'Сочи',lat:43.58,lon:39.73,cat:'hotel',tags:['море'],b:'high',icon:'🏨'},
+{id:'h19',n:'Отель «Бархатные сезоны»',r:'r5',c:'Сочи',lat:43.60,lon:39.72,cat:'hotel',tags:['5звёзд'],b:'high',icon:'🏨'},
+{id:'h20',n:'Санаторий «Русь»',r:'r5',c:'Сочи',lat:43.58,lon:39.74,cat:'hotel',tags:['санаторий'],b:'medium',icon:'🏨'},
+{id:'h21',n:'Отель «Ореанда»',r:'r6',c:'Ялта',lat:44.49,lon:34.16,cat:'hotel',tags:['море'],b:'high',icon:'🏨'},
+{id:'h22',n:'Отель «Муссон»',r:'r6',c:'Ялта',lat:44.50,lon:34.17,cat:'hotel',tags:['море'],b:'medium',icon:'🏨'},
+{id:'h23',n:'Гостиница «Суздаль»',r:'r7',c:'Суздаль',lat:56.42,lon:40.44,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h24',n:'Кремлёвский отель',r:'r7',c:'Владимир',lat:56.13,lon:40.41,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h25',n:'Отель «Азимут»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.35,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h26',n:'Отель «Коринтия»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.35,cat:'hotel',tags:['5звёзд'],b:'high',icon:'🏨'},
+{id:'h27',n:'Хостел «Друзья»',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.34,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h28',n:'Отель «Казань»',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h29',n:'Отель «Мираж»',r:'r9',c:'Казань',lat:55.78,lon:49.12,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h30',n:'Отель «Президент»',r:'r10',c:'Москва',lat:55.74,lon:37.61,cat:'hotel',tags:['5звёзд'],b:'high',icon:'🏨'},
+{id:'h31',n:'Отель «Метрополь»',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'hotel',tags:['5звёзд'],b:'high',icon:'🏨'},
+{id:'h32',n:'Хостел «Москва»',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h33',n:'Отель «Челябинск»',r:'r11',c:'Челябинск',lat:55.16,lon:61.40,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h34',n:'Отель «Екатеринбург»',r:'r11',c:'Екатеринбург',lat:56.84,lon:60.60,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h35',n:'Отель «Махачкала»',r:'r12',c:'Махачкала',lat:42.98,lon:47.50,cat:'hotel',tags:['море'],b:'medium',icon:'🏨'},
+{id:'h36',n:'Отель «Дербент»',r:'r12',c:'Дербент',lat:42.07,lon:48.29,cat:'hotel',tags:['история'],b:'low',icon:'🏨'},
+{id:'h37',n:'Отель «Мурманск»',r:'r13',c:'Мурманск',lat:68.97,lon:33.07,cat:'hotel',tags:['север'],b:'medium',icon:'🏨'},
+{id:'h38',n:'Отель «Азимут»',r:'r13',c:'Мурманск',lat:68.96,lon:33.08,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h39',n:'Отель «Ибис»',r:'r14',c:'Калининград',lat:54.71,lon:20.51,cat:'hotel',tags:['центр'],b:'medium',icon:'🏨'},
+{id:'h40',n:'Отель «Владивосток»',r:'r15',c:'Владивосток',lat:43.11,lon:131.89,cat:'hotel',tags:['море'],b:'medium',icon:'🏨'},
+{id:'h41',n:'Hyatt Regency',r:'r15',c:'Владивосток',lat:43.12,lon:131.90,cat:'hotel',tags:['5звёзд'],b:'high',icon:'🏨'},
+{id:'h42',n:'Хостел «Владивосток»',r:'r15',c:'Владивосток',lat:43.11,lon:131.88,cat:'hotel',tags:['бюджетный'],b:'low',icon:'🛏️'},
+{id:'h43',n:'Отель «Вологда»',r:'r7',c:'Вологда',lat:59.22,lon:39.88,cat:'hotel',tags:['центр'],b:'low',icon:'🏨'},
+{id:'h44',n:'Отель «Ярославль»',r:'r7',c:'Ярославль',lat:57.62,lon:39.85,cat:'hotel',tags:['центр'],b:'low',icon:'🏨'},
+{id:'h45',n:'Отель «Кострома»',r:'r7',c:'Кострома',lat:57.77,lon:40.93,cat:'hotel',tags:['центр'],b:'low',icon:'🏨'},
+// ЕЩЁ БОЛЬШЕ КАФЕ И РЕСТОРАНОВ (50+)
+{id:'c13',n:'Кафе «Северное»',r:'r1',c:'Петрозаводск',lat:61.79,lon:34.36,cat:'cafe',tags:['карельская кухня'],b:'medium',icon:'☕'},
+{id:'c14',n:'Ресторан «Карельская горница»',r:'r1',c:'Петрозаводск',lat:61.78,lon:34.35,cat:'restaurant',tags:['национальная'],b:'medium',icon:'🍽️'},
+{id:'c15',n:'Кафе «Алтай»',r:'r2',c:'Чемал',lat:51.32,lon:85.58,cat:'cafe',tags:['горы'],b:'low',icon:'☕'},
+{id:'c16',n:'Ресторан «Охотничий»',r:'r2',c:'Чемал',lat:51.33,lon:85.59,cat:'restaurant',tags:['мясо'],b:'medium',icon:'🍽️'},
+{id:'c17',n:'Кафе «Байкал»',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'cafe',tags:['омуль'],b:'medium',icon:'🐟'},
+{id:'c18',n:'Ресторан «Старый Порт»',r:'r3',c:'Иркутск',lat:52.28,lon:104.29,cat:'restaurant',tags:['рыба'],b:'medium',icon:'🍽️'},
+{id:'c19',n:'Кафе «Камчатка»',r:'r4',c:'Петропавловск',lat:53.04,lon:158.65,cat:'cafe',tags:['морепродукты'],b:'medium',icon:'🦀'},
+{id:'c20',n:'Ресторан «Краб»',r:'r4',c:'Петропавловск',lat:53.05,lon:158.66,cat:'restaurant',tags:['крабы'],b:'high',icon:'🦀'},
+{id:'c21',n:'Кафе «Море»',r:'r5',c:'Сочи',lat:43.58,lon:39.73,cat:'cafe',tags:['море'],b:'medium',icon:'🍽️'},
+{id:'c22',n:'Ресторан «Навруз»',r:'r5',c:'Сочи',lat:43.59,lon:39.72,cat:'restaurant',tags:['кавказская'],b:'medium',icon:'🍽️'},
+{id:'c23',n:'Кафе «Пляжное»',r:'r5',c:'Сочи',lat:43.58,lon:39.74,cat:'cafe',tags:['пляж'],b:'medium',icon:'🏖️'},
+{id:'c24',n:'Ресторан «Ялта»',r:'r6',c:'Ялта',lat:44.49,lon:34.16,cat:'restaurant',tags:['море'],b:'medium',icon:'🍽️'},
+{id:'c25',n:'Кафе «Набережная»',r:'r6',c:'Ялта',lat:44.50,lon:34.17,cat:'cafe',tags:['море'],b:'medium',icon:'☕'},
+{id:'c26',n:'Ресторан «Суздаль»',r:'r7',c:'Суздаль',lat:56.42,lon:40.45,cat:'restaurant',tags:['русская'],b:'medium',icon:'🍽️'},
+{id:'c27',n:'Кафе «Медовуха»',r:'r7',c:'Суздаль',lat:56.43,lon:40.44,cat:'cafe',tags:['медовуха'],b:'low',icon:'☕'},
+{id:'c28',n:'Ресторан «Владимир»',r:'r7',c:'Владимир',lat:56.13,lon:40.41,cat:'restaurant',tags:['русская'],b:'medium',icon:'🍽️'},
+{id:'c29',n:'Кафе «Пышечная»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.33,cat:'cafe',tags:['пышки'],b:'low',icon:'🥐'},
+{id:'c30',n:'Ресторан «Мезонин»',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'restaurant',tags:['русская'],b:'high',icon:'🍽️'},
+{id:'c31',n:'Кафе «Дом Бублика»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.34,cat:'cafe',tags:['завтраки'],b:'low',icon:'🥐'},
+{id:'c32',n:'Ресторан «Царская охота»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.35,cat:'restaurant',tags:['русская'],b:'high',icon:'🍽️'},
+{id:'c33',n:'Кафе «Невское»',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.36,cat:'cafe',tags:['центр'],b:'medium',icon:'☕'},
+{id:'c34',n:'Ресторан «Тубэтэй»',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'restaurant',tags:['татарская'],b:'medium',icon:'🍽️'},
+{id:'c35',n:'Чайхана «Навруз»',r:'r9',c:'Казань',lat:55.78,lon:49.12,cat:'restaurant',tags:['восточная'],b:'medium',icon:'🍽️'},
+{id:'c36',n:'Кафе «Чак-Чак»',r:'r9',c:'Казань',lat:55.79,lon:49.13,cat:'cafe',tags:['татарская'],b:'low',icon:'☕'},
+{id:'c37',n:'Ресторан «Пушкин»',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'restaurant',tags:['русская'],b:'high',icon:'🍽️'},
+{id:'c38',n:'Кафе «Кофемания»',r:'r10',c:'Москва',lat:55.75,lon:37.62,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'c39',n:'Ресторан «Русский»',r:'r10',c:'Москва',lat:55.74,lon:37.61,cat:'restaurant',tags:['русская'],b:'high',icon:'🍽️'},
+{id:'c40',n:'Кафе «Вареничная»',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'cafe',tags:['бюджетно'],b:'low',icon:'☕'},
+{id:'c41',n:'Ресторан «Уральские пельмени»',r:'r11',c:'Екатеринбург',lat:56.84,lon:60.60,cat:'restaurant',tags:['пельмени'],b:'medium',icon:'🍽️'},
+{id:'c42',n:'Кафе «Тагил»',r:'r11',c:'Челябинск',lat:55.16,lon:61.40,cat:'cafe',tags:['уральская'],b:'low',icon:'☕'},
+{id:'c43',n:'Ресторан «Кавказ»',r:'r12',c:'Махачкала',lat:42.98,lon:47.50,cat:'restaurant',tags:['кавказская'],b:'medium',icon:'🍽️'},
+{id:'c44',n:'Кафе «Дербент»',r:'r12',c:'Дербент',lat:42.07,lon:48.29,cat:'cafe',tags:['восточная'],b:'low',icon:'☕'},
+{id:'c45',n:'Кафе «Северное сияние»',r:'r13',c:'Мурманск',lat:68.97,lon:33.07,cat:'cafe',tags:['северная'],b:'medium',icon:'☕'},
+{id:'c46',n:'Ресторан «Огонёк»',r:'r13',c:'Мурманск',lat:68.96,lon:33.08,cat:'restaurant',tags:['рыба'],b:'medium',icon:'🍽️'},
+{id:'c47',n:'Кафе «Кёнигсберг»',r:'r14',c:'Калининград',lat:54.71,lon:20.51,cat:'cafe',tags:['немецкая'],b:'medium',icon:'☕'},
+{id:'c48',n:'Ресторан «Балтика»',r:'r14',c:'Калининград',lat:54.72,lon:20.52,cat:'restaurant',tags:['рыба'],b:'medium',icon:'🍽️'},
+{id:'c49',n:'Кафе «Владивосток»',r:'r15',c:'Владивосток',lat:43.11,lon:131.89,cat:'cafe',tags:['морепродукты'],b:'medium',icon:'🦐'},
+{id:'c50',n:'Ресторан «Тихий океан»',r:'r15',c:'Владивосток',lat:43.12,lon:131.90,cat:'restaurant',tags:['рыба'],b:'high',icon:'🍽️'},
+{id:'c51',n:'Кафе «Ярославич»',r:'r7',c:'Ярославль',lat:57.62,lon:39.85,cat:'cafe',tags:['русская'],b:'low',icon:'☕'},
+{id:'c52',n:'Ресторан «Кострома»',r:'r7',c:'Кострома',lat:57.77,lon:40.93,cat:'restaurant',tags:['русская'],b:'medium',icon:'🍽️'},
+{id:'c53',n:'Кафе «Вологда»',r:'r7',c:'Вологда',lat:59.22,lon:39.88,cat:'cafe',tags:['масло'],b:'low',icon:'☕'},
+{id:'c54',n:'Ресторан «Олимп»',r:'r5',c:'Сочи',lat:43.67,lon:40.30,cat:'restaurant',tags:['горы'],b:'high',icon:'🍽️'},
+{id:'c55',n:'Кафе «Горное»',r:'r5',c:'Сочи',lat:43.68,lon:40.20,cat:'cafe',tags:['горы'],b:'medium',icon:'☕'},
+{id:'c56',n:'Ресторан «Листвянка»',r:'r3',c:'Листвянка',lat:51.85,lon:104.85,cat:'restaurant',tags:['омуль'],b:'medium',icon:'🍽️'},
+{id:'c57',n:'Кафе «Ольхон»',r:'r3',c:'Остров Ольхон',lat:53.10,lon:107.40,cat:'cafe',tags:['байкал'],b:'medium',icon:'☕'},
+{id:'c58',n:'Ресторан «Териберка»',r:'r13',c:'Териберка',lat:69.16,lon:35.13,cat:'restaurant',tags:['рыба'],b:'medium',icon:'🍽️'},
+{id:'c59',n:'Кафе «Куршская коса»',r:'r14',c:'Калининград',lat:55.20,lon:20.90,cat:'cafe',tags:['море'],b:'low',icon:'☕'},
+{id:'c60',n:'Ресторан «Приморье»',r:'r15',c:'Владивосток',lat:43.11,lon:131.88,cat:'restaurant',tags:['азиатская'],b:'high',icon:'🍽️'},
+// ДОПОЛНИТЕЛЬНЫЕ ТРАНСПОРТНЫЕ ТОЧКИ
+{id:'t11',n:'Ж/Д вокзал Санкт-Петербург',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.36,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t12',n:'Автовокзал Москва',r:'r10',c:'Москва',lat:55.77,lon:37.66,cat:'transport',tags:['автобус'],b:'low',icon:'🚌'},
+{id:'t13',n:'Аэропорт Домодедово',r:'r10',c:'Москва',lat:55.41,lon:37.91,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t14',n:'Аэропорт Внуково',r:'r10',c:'Москва',lat:55.60,lon:37.27,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t15',n:'Ж/Д вокзал Сочи',r:'r5',c:'Сочи',lat:43.60,lon:39.72,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t16',n:'Ж/Д вокзал Иркутск',r:'r3',c:'Иркутск',lat:52.28,lon:104.32,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t17',n:'Автовокзал Казань',r:'r9',c:'Казань',lat:55.78,lon:49.13,cat:'transport',tags:['автобус'],b:'low',icon:'🚌'},
+{id:'t18',n:'Ж/Д вокзал Екатеринбург',r:'r11',c:'Екатеринбург',lat:56.83,lon:60.59,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+{id:'t19',n:'Аэропорт Екатеринбург',r:'r11',c:'Екатеринбург',lat:56.74,lon:60.81,cat:'transport',tags:['аэропорт'],b:'medium',icon:'✈️'},
+{id:'t20',n:'Ж/Д вокзал Владивосток',r:'r15',c:'Владивосток',lat:43.12,lon:131.89,cat:'transport',tags:['ж/д'],b:'low',icon:'🚂'},
+// МЕСТА ДЛЯ ПЕРЕКУСОВ (200+)
+{id:'s1',n:'Макдоналдс',r:'r10',c:'Москва',lat:55.75,lon:37.62,cat:'fastfood',tags:['бургеры','фастфуд'],b:'low',icon:'🍔'},
+{id:'s2',n:'KFC',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'fastfood',tags:['курица','фастфуд'],b:'low',icon:'🍗'},
+{id:'s3',n:'Burger King',r:'r10',c:'Москва',lat:55.74,lon:37.63,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s4',n:'Subway',r:'r10',c:'Москва',lat:55.75,lon:37.60,cat:'fastfood',tags:['сэндвичи'],b:'low',icon:'🥪'},
+{id:'s5',n:'Starbucks',r:'r10',c:'Москва',lat:55.76,lon:37.62,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s6',n:'Кофемания',r:'r10',c:'Москва',lat:55.74,lon:37.61,cat:'cafe',tags:['кофе','завтраки'],b:'medium',icon:'☕'},
+{id:'s7',n:'Волконский',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'bakery',tags:['выпечка','хлеб'],b:'medium',icon:'🥐'},
+{id:'s8',n:'Цех85',r:'r10',c:'Москва',lat:55.76,lon:37.60,cat:'bakery',tags:['выпечка'],b:'medium',icon:'🥖'},
+{id:'s9',n:'Шаурма №1',r:'r10',c:'Москва',lat:55.74,lon:37.62,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s10',n:'Теремок',r:'r10',c:'Москва',lat:55.75,lon:37.61,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s11',n:'Макдоналдс',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.33,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s12',n:'KFC',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s13',n:'Burger King',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.34,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s14',n:'Starbucks',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s15',n:'Кофемания',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.32,cat:'cafe',tags:['кофе','завтраки'],b:'medium',icon:'☕'},
+{id:'s16',n:'Волконский',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.34,cat:'bakery',tags:['выпечка'],b:'medium',icon:'🥐'},
+{id:'s17',n:'Шаурма на Невском',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.33,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s18',n:'Пышечная',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'fastfood',tags:['пышки'],b:'low',icon:'🍩'},
+{id:'s19',n:'Макдоналдс',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s20',n:'KFC',r:'r9',c:'Казань',lat:55.78,lon:49.12,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s21',n:'Тюбетей',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'fastfood',tags:['татарская','блюда'],b:'low',icon:'🥟'},
+{id:'s22',n:'Кофейня на Баумана',r:'r9',c:'Казань',lat:55.79,lon:49.12,cat:'cafe',tags:['кофе'],b:'low',icon:'☕'},
+{id:'s23',n:'Эчпочмак',r:'r9',c:'Казань',lat:55.78,lon:49.11,cat:'fastfood',tags:['татарская'],b:'low',icon:'🥟'},
+{id:'s24',n:'Макдоналдс',r:'r5',c:'Сочи',lat:43.58,lon:39.73,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s25',n:'KFC',r:'r5',c:'Сочи',lat:43.59,lon:39.72,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s26',n:'Шаурма у моря',r:'r5',c:'Сочи',lat:43.58,lon:39.74,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s27',n:'Кофейня на набережной',r:'r5',c:'Сочи',lat:43.59,lon:39.73,cat:'cafe',tags:['кофе','море'],b:'medium',icon:'☕'},
+{id:'s28',n:'Макдоналдс',r:'r6',c:'Ялта',lat:44.49,lon:34.16,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s29',n:'KFC',r:'r6',c:'Ялта',lat:44.50,lon:34.17,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s30',n:'Крымская шаурма',r:'r6',c:'Ялта',lat:44.49,lon:34.15,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s31',n:'Кофейня на набережной',r:'r6',c:'Ялта',lat:44.50,lon:34.16,cat:'cafe',tags:['кофе','море'],b:'medium',icon:'☕'},
+{id:'s32',n:'Макдоналдс',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s33',n:'KFC',r:'r3',c:'Иркутск',lat:52.28,lon:104.29,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s34',n:'Байкальская шаурма',r:'r3',c:'Иркутск',lat:52.29,lon:104.31,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s35',n:'Кофейня на Байкале',r:'r3',c:'Иркутск',lat:52.28,lon:104.30,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s36',n:'Макдоналдс',r:'r2',c:'Барнаул',lat:53.35,lon:83.75,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s37',n:'KFC',r:'r2',c:'Барнаул',lat:53.36,lon:83.76,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s38',n:'Алтайская шаурма',r:'r2',c:'Барнаул',lat:53.35,lon:83.74,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s39',n:'Кофейня в горах',r:'r2',c:'Барнаул',lat:53.36,lon:83.75,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s40',n:'Макдоналдс',r:'r4',c:'Петропавловск',lat:53.04,lon:158.65,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s41',n:'KFC',r:'r4',c:'Петропавловск',lat:53.05,lon:158.66,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s42',n:'Камчатская шаурма',r:'r4',c:'Петропавловск',lat:53.04,lon:158.64,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s43',n:'Кофейня у вулкана',r:'r4',c:'Петропавловск',lat:53.05,lon:158.65,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s44',n:'Макдоналдс',r:'r7',c:'Владимир',lat:56.13,lon:40.41,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s45',n:'KFC',r:'r7',c:'Владимир',lat:56.14,lon:40.40,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s46',n:'Суздальская выпечка',r:'r7',c:'Суздаль',lat:56.42,lon:40.45,cat:'bakery',tags:['выпечка'],b:'low',icon:'🥐'},
+{id:'s47',n:'Кофейня в кремле',r:'r7',c:'Суздаль',lat:56.43,lon:40.44,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s48',n:'Макдоналдс',r:'r11',c:'Екатеринбург',lat:56.84,lon:60.60,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s49',n:'KFC',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.59,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s50',n:'Уральская шаурма',r:'r11',c:'Екатеринбург',lat:56.84,lon:60.61,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s51',n:'Кофейня на Плотинке',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.60,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s52',n:'Макдоналдс',r:'r12',c:'Махачкала',lat:42.98,lon:47.50,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s53',n:'KFC',r:'r12',c:'Махачкала',lat:42.99,lon:47.49,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s54',n:'Дагестанская шаурма',r:'r12',c:'Махачкала',lat:42.98,lon:47.51,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s55',n:'Кофейня у моря',r:'r12',c:'Махачкала',lat:42.99,lon:47.50,cat:'cafe',tags:['кофе','море'],b:'medium',icon:'☕'},
+{id:'s56',n:'Макдоналдс',r:'r13',c:'Мурманск',lat:68.97,lon:33.07,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s57',n:'KFC',r:'r13',c:'Мурманск',lat:68.98,lon:33.06,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s58',n:'Северная шаурма',r:'r13',c:'Мурманск',lat:68.97,lon:33.08,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s59',n:'Кофейня за полярным кругом',r:'r13',c:'Мурманск',lat:68.98,lon:33.07,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s60',n:'Макдоналдс',r:'r14',c:'Калининград',lat:54.71,lon:20.51,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s61',n:'KFC',r:'r14',c:'Калининград',lat:54.72,lon:20.50,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s62',n:'Кёнигсбергская шаурма',r:'r14',c:'Калининград',lat:54.71,lon:20.52,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s63',n:'Кофейня у собора',r:'r14',c:'Калининград',lat:54.72,lon:20.51,cat:'cafe',tags:['кофе'],b:'medium',icon:'☕'},
+{id:'s64',n:'Макдоналдс',r:'r15',c:'Владивосток',lat:43.11,lon:131.89,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s65',n:'KFC',r:'r15',c:'Владивосток',lat:43.12,lon:131.88,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s66',n:'Приморская шаурма',r:'r15',c:'Владивосток',lat:43.11,lon:131.90,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s67',n:'Кофейня у моря',r:'r15',c:'Владивосток',lat:43.12,lon:131.89,cat:'cafe',tags:['кофе','море'],b:'medium',icon:'☕'},
+{id:'s68',n:'Макдоналдс',r:'r1',c:'Петрозаводск',lat:61.79,lon:34.36,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s69',n:'KFC',r:'r1',c:'Петрозаводск',lat:61.80,lon:34.35,cat:'fastfood',tags:['курица'],b:'low',icon:'🍗'},
+{id:'s70',n:'Карельская шаурма',r:'r1',c:'Петрозаводск',lat:61.79,lon:34.37,cat:'fastfood',tags:['шаурма'],b:'low',icon:'🌯'},
+{id:'s71',n:'Кофейня у озера',r:'r1',c:'Петрозаводск',lat:61.80,lon:34.36,cat:'cafe',tags:['кофе','озеро'],b:'medium',icon:'☕'},
+{id:'s72',n:'Макдоналдс',r:'r10',c:'Москва',lat:55.77,lon:37.63,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s73',n:'Вкусно и точка',r:'r10',c:'Москва',lat:55.76,lon:37.62,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s74',n:'Теремок',r:'r10',c:'Москва',lat:55.75,lon:37.64,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s75',n:'Cinnabon',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s76',n:'Baskin Robbins',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s77',n:'Чайхона №1',r:'r10',c:'Москва',lat:55.76,lon:37.62,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s78',n:'Шоколадница',r:'r10',c:'Москва',lat:55.75,lon:37.64,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s79',n:'IL Патио',r:'r10',c:'Москва',lat:55.76,lon:37.61,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s80',n:'Якитория',r:'r10',c:'Москва',lat:55.75,lon:37.63,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s81',n:'Макдоналдс',r:'r8',c:'Санкт-Петербург',lat:59.95,lon:30.34,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s82',n:'Вкусно и точка',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s83',n:'Теремок',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.35,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s84',n:'Cinnabon',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s85',n:'Baskin Robbins',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.34,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s86',n:'Чайхона №1',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.33,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s87',n:'Шоколадница',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.35,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s88',n:'IL Патио',r:'r8',c:'Санкт-Петербург',lat:59.94,lon:30.32,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s89',n:'Якитория',r:'r8',c:'Санкт-Петербург',lat:59.93,lon:30.34,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s90',n:'Макдоналдс',r:'r9',c:'Казань',lat:55.80,lon:49.13,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s91',n:'Вкусно и точка',r:'r9',c:'Казань',lat:55.79,lon:49.12,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s92',n:'Теремок',r:'r9',c:'Казань',lat:55.80,lon:49.14,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s93',n:'Cinnabon',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s94',n:'Baskin Robbins',r:'r9',c:'Казань',lat:55.80,lon:49.13,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s95',n:'Чайхона №1',r:'r9',c:'Казань',lat:55.79,lon:49.12,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s96',n:'Шоколадница',r:'r9',c:'Казань',lat:55.80,lon:49.14,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s97',n:'IL Патио',r:'r9',c:'Казань',lat:55.79,lon:49.11,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s98',n:'Якитория',r:'r9',c:'Казань',lat:55.80,lon:49.13,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s99',n:'Макдоналдс',r:'r5',c:'Сочи',lat:43.60,lon:39.75,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s100',n:'Вкусно и точка',r:'r5',c:'Сочи',lat:43.59,lon:39.74,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s101',n:'Теремок',r:'r5',c:'Сочи',lat:43.60,lon:39.76,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s102',n:'Cinnabon',r:'r5',c:'Сочи',lat:43.59,lon:39.73,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s103',n:'Baskin Robbins',r:'r5',c:'Сочи',lat:43.60,lon:39.75,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s104',n:'Чайхона №1',r:'r5',c:'Сочи',lat:43.59,lon:39.74,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s105',n:'Шоколадница',r:'r5',c:'Сочи',lat:43.60,lon:39.76,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s106',n:'IL Патио',r:'r5',c:'Сочи',lat:43.59,lon:39.73,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s107',n:'Якитория',r:'r5',c:'Сочи',lat:43.60,lon:39.75,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s108',n:'Макдоналдс',r:'r6',c:'Ялта',lat:44.51,lon:34.18,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s109',n:'Вкусно и точка',r:'r6',c:'Ялта',lat:44.50,lon:34.17,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s110',n:'Теремок',r:'r6',c:'Ялта',lat:44.51,lon:34.19,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s111',n:'Cinnabon',r:'r6',c:'Ялта',lat:44.50,lon:34.16,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s112',n:'Baskin Robbins',r:'r6',c:'Ялта',lat:44.51,lon:34.18,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s113',n:'Чайхона №1',r:'r6',c:'Ялта',lat:44.50,lon:34.17,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s114',n:'Шоколадница',r:'r6',c:'Ялта',lat:44.51,lon:34.19,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s115',n:'IL Патио',r:'r6',c:'Ялта',lat:44.50,lon:34.16,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s116',n:'Якитория',r:'r6',c:'Ялта',lat:44.51,lon:34.18,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s117',n:'Макдоналдс',r:'r3',c:'Иркутск',lat:52.30,lon:104.32,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s118',n:'Вкусно и точка',r:'r3',c:'Иркутск',lat:52.29,lon:104.31,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s119',n:'Теремок',r:'r3',c:'Иркутск',lat:52.30,lon:104.33,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s120',n:'Cinnabon',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s121',n:'Baskin Robbins',r:'r3',c:'Иркутск',lat:52.30,lon:104.32,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s122',n:'Чайхона №1',r:'r3',c:'Иркутск',lat:52.29,lon:104.31,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s123',n:'Шоколадница',r:'r3',c:'Иркутск',lat:52.30,lon:104.33,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s124',n:'IL Патио',r:'r3',c:'Иркутск',lat:52.29,lon:104.30,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s125',n:'Якитория',r:'r3',c:'Иркутск',lat:52.30,lon:104.32,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s126',n:'Макдоналдс',r:'r2',c:'Барнаул',lat:53.37,lon:83.77,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s127',n:'Вкусно и точка',r:'r2',c:'Барнаул',lat:53.36,lon:83.76,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s128',n:'Теремок',r:'r2',c:'Барнаул',lat:53.37,lon:83.78,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s129',n:'Cinnabon',r:'r2',c:'Барнаул',lat:53.36,lon:83.75,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s130',n:'Baskin Robbins',r:'r2',c:'Барнаул',lat:53.37,lon:83.77,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s131',n:'Чайхона №1',r:'r2',c:'Барнаул',lat:53.36,lon:83.76,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s132',n:'Шоколадница',r:'r2',c:'Барнаул',lat:53.37,lon:83.78,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s133',n:'IL Патио',r:'r2',c:'Барнаул',lat:53.36,lon:83.75,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s134',n:'Якитория',r:'r2',c:'Барнаул',lat:53.37,lon:83.77,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s135',n:'Макдоналдс',r:'r4',c:'Петропавловск',lat:53.06,lon:158.67,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s136',n:'Вкусно и точка',r:'r4',c:'Петропавловск',lat:53.05,lon:158.66,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s137',n:'Теремок',r:'r4',c:'Петропавловск',lat:53.06,lon:158.68,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s138',n:'Cinnabon',r:'r4',c:'Петропавловск',lat:53.05,lon:158.65,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s139',n:'Baskin Robbins',r:'r4',c:'Петропавловск',lat:53.06,lon:158.67,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s140',n:'Чайхона №1',r:'r4',c:'Петропавловск',lat:53.05,lon:158.66,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s141',n:'Шоколадница',r:'r4',c:'Петропавловск',lat:53.06,lon:158.68,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s142',n:'IL Патио',r:'r4',c:'Петропавловск',lat:53.05,lon:158.65,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s143',n:'Якитория',r:'r4',c:'Петропавловск',lat:53.06,lon:158.67,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s144',n:'Макдоналдс',r:'r7',c:'Владимир',lat:56.15,lon:40.43,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s145',n:'Вкусно и точка',r:'r7',c:'Владимир',lat:56.14,lon:40.42,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s146',n:'Теремок',r:'r7',c:'Владимир',lat:56.15,lon:40.44,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s147',n:'Cinnabon',r:'r7',c:'Владимир',lat:56.14,lon:40.41,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s148',n:'Baskin Robbins',r:'r7',c:'Владимир',lat:56.15,lon:40.43,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s149',n:'Чайхона №1',r:'r7',c:'Владимир',lat:56.14,lon:40.42,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s150',n:'Шоколадница',r:'r7',c:'Владимир',lat:56.15,lon:40.44,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s151',n:'IL Патио',r:'r7',c:'Владимир',lat:56.14,lon:40.41,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s152',n:'Якитория',r:'r7',c:'Владимир',lat:56.15,lon:40.43,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s153',n:'Макдоналдс',r:'r11',c:'Екатеринбург',lat:56.86,lon:60.62,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s154',n:'Вкусно и точка',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.61,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s155',n:'Теремок',r:'r11',c:'Екатеринбург',lat:56.86,lon:60.63,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s156',n:'Cinnabon',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.60,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s157',n:'Baskin Robbins',r:'r11',c:'Екатеринбург',lat:56.86,lon:60.62,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s158',n:'Чайхона №1',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.61,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s159',n:'Шоколадница',r:'r11',c:'Екатеринбург',lat:56.86,lon:60.63,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s160',n:'IL Патио',r:'r11',c:'Екатеринбург',lat:56.85,lon:60.60,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s161',n:'Якитория',r:'r11',c:'Екатеринбург',lat:56.86,lon:60.62,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s162',n:'Макдоналдс',r:'r12',c:'Махачкала',lat:43.00,lon:47.52,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s163',n:'Вкусно и точка',r:'r12',c:'Махачкала',lat:42.99,lon:47.51,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s164',n:'Теремок',r:'r12',c:'Махачкала',lat:43.00,lon:47.53,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s165',n:'Cinnabon',r:'r12',c:'Махачкала',lat:42.99,lon:47.50,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s166',n:'Baskin Robbins',r:'r12',c:'Махачкала',lat:43.00,lon:47.52,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s167',n:'Чайхона №1',r:'r12',c:'Махачкала',lat:42.99,lon:47.51,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s168',n:'Шоколадница',r:'r12',c:'Махачкала',lat:43.00,lon:47.53,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s169',n:'IL Патио',r:'r12',c:'Махачкала',lat:42.99,lon:47.50,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s170',n:'Якитория',r:'r12',c:'Махачкала',lat:43.00,lon:47.52,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s171',n:'Макдоналдс',r:'r13',c:'Мурманск',lat:68.99,lon:33.09,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s172',n:'Вкусно и точка',r:'r13',c:'Мурманск',lat:68.98,lon:33.08,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s173',n:'Теремок',r:'r13',c:'Мурманск',lat:68.99,lon:33.10,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s174',n:'Cinnabon',r:'r13',c:'Мурманск',lat:68.98,lon:33.07,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s175',n:'Baskin Robbins',r:'r13',c:'Мурманск',lat:68.99,lon:33.09,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s176',n:'Чайхона №1',r:'r13',c:'Мурманск',lat:68.98,lon:33.08,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s177',n:'Шоколадница',r:'r13',c:'Мурманск',lat:68.99,lon:33.10,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s178',n:'IL Патио',r:'r13',c:'Мурманск',lat:68.98,lon:33.07,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s179',n:'Якитория',r:'r13',c:'Мурманск',lat:68.99,lon:33.09,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s180',n:'Макдоналдс',r:'r14',c:'Калининград',lat:54.73,lon:20.53,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s181',n:'Вкусно и точка',r:'r14',c:'Калининград',lat:54.72,lon:20.52,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s182',n:'Теремок',r:'r14',c:'Калининград',lat:54.73,lon:20.54,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s183',n:'Cinnabon',r:'r14',c:'Калининград',lat:54.72,lon:20.51,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s184',n:'Baskin Robbins',r:'r14',c:'Калининград',lat:54.73,lon:20.53,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s185',n:'Чайхона №1',r:'r14',c:'Калининград',lat:54.72,lon:20.52,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s186',n:'Шоколадница',r:'r14',c:'Калининград',lat:54.73,lon:20.54,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s187',n:'IL Патио',r:'r14',c:'Калининград',lat:54.72,lon:20.51,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s188',n:'Якитория',r:'r14',c:'Калининград',lat:54.73,lon:20.53,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s189',n:'Макдоналдс',r:'r15',c:'Владивосток',lat:43.13,lon:131.91,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s190',n:'Вкусно и точка',r:'r15',c:'Владивосток',lat:43.12,lon:131.90,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s191',n:'Теремок',r:'r15',c:'Владивосток',lat:43.13,lon:131.92,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'},
+{id:'s192',n:'Cinnabon',r:'r15',c:'Владивосток',lat:43.12,lon:131.89,cat:'bakery',tags:['булочки'],b:'medium',icon:'🥐'},
+{id:'s193',n:'Baskin Robbins',r:'r15',c:'Владивосток',lat:43.13,lon:131.91,cat:'dessert',tags:['мороженое'],b:'medium',icon:'🍦'},
+{id:'s194',n:'Чайхона №1',r:'r15',c:'Владивосток',lat:43.12,lon:131.90,cat:'restaurant',tags:['узбекская'],b:'medium',icon:'🍽️'},
+{id:'s195',n:'Шоколадница',r:'r15',c:'Владивосток',lat:43.13,lon:131.92,cat:'cafe',tags:['кофе','десерты'],b:'medium',icon:'☕'},
+{id:'s196',n:'IL Патио',r:'r15',c:'Владивосток',lat:43.12,lon:131.89,cat:'restaurant',tags:['итальянская'],b:'medium',icon:'🍝'},
+{id:'s197',n:'Якитория',r:'r15',c:'Владивосток',lat:43.13,lon:131.91,cat:'restaurant',tags:['японская'],b:'medium',icon:'🍣'},
+{id:'s198',n:'Макдоналдс',r:'r1',c:'Петрозаводск',lat:61.81,lon:34.38,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s199',n:'Вкусно и точка',r:'r1',c:'Петрозаводск',lat:61.80,lon:34.37,cat:'fastfood',tags:['бургеры'],b:'low',icon:'🍔'},
+{id:'s200',n:'Теремок',r:'r1',c:'Петрозаводск',lat:61.81,lon:34.39,cat:'fastfood',tags:['блины'],b:'low',icon:'🥞'}
+];
+
+const readyRoutes=[
+{id:'rr1',name:'Золотое кольцо',desc:'Древнерусские города',days:7,region:'r7',emoji:'🏛️',stops:['p10','p25','p26','p11']},
+{id:'rr2',name:'Серебряное ожерелье',desc:'Северо-Запад',days:7,region:'r1',emoji:'💎',stops:['p12','p13','p29','p1']},
+{id:'rr3',name:'Горный Алтай',desc:'Природа Алтая',days:7,region:'r2',emoji:'🏔️',stops:['p14','p15']},
+{id:'rr4',name:'Байкал',desc:'Священное озеро',days:5,region:'r3',emoji:'🌊',stops:['p8','p9']},
+{id:'rr5',name:'Камчатка',desc:'Вулканы',days:5,region:'r4',emoji:'🌋',stops:['p16']},
+{id:'rr6',name:'Крым',desc:'Дворцы и море',days:6,region:'r6',emoji:'🏖️',stops:['p18','p30']},
+{id:'rr7',name:'Петербург',desc:'Императорские резиденции',days:4,region:'r8',emoji:'👑',stops:['p1','p2','p3']},
+{id:'rr8',name:'Москва',desc:'Столица',days:3,region:'r10',emoji:'🏙️',stops:['p4','p5','p6']},
+{id:'rr9',name:'Дагестан',desc:'Горы',days:5,region:'r12',emoji:'⛰️',stops:['p19','p24']},
+{id:'rr10',name:'Калининград',desc:'Европа в России',days:4,region:'r14',emoji:'🏰',stops:['p21']},
+{id:'rr11',name:'Казань',desc:'Переплетение культур',days:3,region:'r9',emoji:'🕌',stops:['p7','p27']},
+{id:'rr12',name:'Кольский Север',desc:'Тундра',days:4,region:'r13',emoji:'❄️',stops:['p20']},
+{id:'rr13',name:'Урал',desc:'Горы и озёра',days:5,region:'r11',emoji:'🏔️',stops:['p22','p28']},
+{id:'rr14',name:'Сочи',desc:'Море и горы',days:4,region:'r5',emoji:'🌊',stops:['p17']},
+{id:'rr15',name:'Приморье',desc:'Дальний Восток',days:5,region:'r15',emoji:'🌅',stops:['p23']}
+];
+
+let currentCityFilter='',currentCatFilter='',selectedPlaceIds=new Set();
+
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');document.querySelectorAll('.nav-links a,.mobile-menu a').forEach(a=>a.classList.remove('active'));document.querySelectorAll('[data-page="'+id+'"]').forEach(a=>a.classList.add('active'));window.scrollTo(0,0);if(id==='places'){renderCityFilters();renderCategoryTabs();renderPlaces()}if(id==='map')initMainMap();if(id==='routes')renderRoutes();if(id==='builder')renderPlaceCheckboxes()}
+function toggleMobile(){document.getElementById('burger-btn').classList.toggle('open');document.getElementById('mobile-menu').classList.toggle('open')}
+function closeMobile(){document.getElementById('burger-btn').classList.remove('open');document.getElementById('mobile-menu').classList.remove('open')}
+
+function renderCityFilters(){const cities=[...new Set(places.map(p=>p.c))].sort();const el=document.getElementById('city-filters');el.innerHTML='<span class="chip'+(currentCityFilter===''?' active':'')+'" onclick="filterCity(\'\')">Все города</span>';cities.slice(0,20).forEach(c=>{el.innerHTML+='<span class="chip'+(currentCityFilter===c?' active':'')+'" onclick="filterCity(\''+c.replace(/'/g,"\\'")+'\')">'+c+'</span>'})}
+function filterCity(city){currentCityFilter=city;renderCityFilters();renderPlaces()}
+
+function renderCategoryTabs(){const el=document.getElementById('category-tabs');el.innerHTML='<span class="category-tab'+(currentCatFilter===''?' active':'')+'" onclick="filterCat(\'\')">Все</span>';Object.keys(catLabels).forEach(cat=>{el.innerHTML+='<span class="category-tab'+(currentCatFilter===cat?' active':'')+'" onclick="filterCat(\''+cat+'\')">'+catEmoji[cat]+' '+catLabels[cat]+'</span>'})}
+function filterCat(cat){currentCatFilter=cat;renderCategoryTabs();renderPlaces()}
+
+function renderPlaces(){const grid=document.getElementById('places-grid');grid.innerHTML='';const search=document.getElementById('search-places').value.toLowerCase();let filtered=places.filter(p=>{const matchSearch=!search||p.n.toLowerCase().indexOf(search)!==-1||(p.c&&p.c.toLowerCase().indexOf(search)!==-1)||p.tags.join(' ').toLowerCase().indexOf(search)!==-1;const matchCity=!currentCityFilter||p.c===currentCityFilter;const matchCat=!currentCatFilter||p.cat===currentCatFilter;return matchSearch&&matchCity&&matchCat});
+// Сортировка по бюджету
+const budgetOrder={low:0,medium:1,high:2};
+filtered.sort((a,b)=>budgetOrder[a.b]-budgetOrder[b.b]);
+document.getElementById('places-count').textContent='Найдено: '+filtered.length+' из '+places.length;
+filtered.forEach(function(place){const region=regions.find(r=>r.id===place.r);const card=document.createElement('div');card.className='card';card.onclick=function(){openPlaceModal(place)};
+const budgetBadge='<span class="budget-badge budget-'+place.b+'">'+budgetLabels[place.b]+'</span>';
+var photoUrl=placePhotos[place.id]||place.img||null;
+var imgHtml=photoUrl?'<div class="place-img" style="background-image:url('+photoUrl+')"></div>':'<div class="place-img">'+place.icon+'</div>';
+card.innerHTML=imgHtml+'<h3 style="font-size:1rem;font-weight:700;margin-bottom:.25rem">'+place.n+budgetBadge+'</h3><p style="color:#9ca3af;font-size:.8rem;margin-bottom:.25rem">📍 '+place.c+(region?' • '+region.name:'')+'</p><p style="color:#6b7280;font-size:.75rem">'+(catEmoji[place.cat]||'')+' '+(catLabels[place.cat]||place.cat)+'</p>';grid.appendChild(card)})}
+
+function renderRoutes(){const grid=document.getElementById('routes-grid');grid.innerHTML='';readyRoutes.forEach(function(route){const region=regions.find(r=>r.id===route.region);const card=document.createElement('div');card.className='route-card';card.onclick=function(){loadReadyRoute(route)};card.innerHTML='<div style="font-size:2.5rem;margin-bottom:.5rem">'+route.emoji+'</div><h3 style="font-size:1.15rem;font-weight:700;margin-bottom:.25rem">'+route.name+'</h3><p style="color:#9ca3af;font-size:.85rem;margin-bottom:.75rem">'+route.desc+'</p><div style="display:flex;gap:.5rem;flex-wrap:wrap"><span style="background:rgba(0,245,212,0.1);color:#00f5d4;padding:.25rem .6rem;border-radius:.3rem;font-size:.75rem">📅 '+route.days+' дней</span><span style="background:rgba(179,136,255,0.1);color:#b388ff;padding:.25rem .6rem;border-radius:.3rem;font-size:.75rem">📍 '+route.stops.length+' точек</span></div>';grid.appendChild(card)})}
+
+function loadReadyRoute(route){showPage('builder');document.getElementById('input-region').value=route.region;document.getElementById('input-days').value=route.days;document.getElementById('days-value').textContent=route.days;selectedPlaceIds=new Set(route.stops);onRegionChange();renderPlaceCheckboxes()}
+
+function onRegionChange(){const region=document.getElementById('input-region').value;if(region){document.getElementById('places-label').textContent='📍 Места в регионе: '+(regions.find(r=>r.slug===region)||{}).name}else{document.getElementById('places-label').textContent='📍 Выберите места'}renderPlaceCheckboxes()}
+
+function init(){const rs=document.getElementById('input-region');regions.forEach(r=>{const o=document.createElement('option');o.value=r.slug;o.textContent=r.name;rs.appendChild(o)});
+const ig=document.getElementById('interests-grid');Object.keys(catLabels).forEach(cat=>{const b=document.createElement('button');b.type='button';b.textContent=(catEmoji[cat]||'')+' '+catLabels[cat];b.dataset.cat=cat;b.dataset.selected='false';b.className='chip';b.onclick=function(){if(this.dataset.selected==='true'){this.dataset.selected='false';this.classList.remove('active')}else{this.dataset.selected='true';this.classList.add('active')}renderPlaceCheckboxes()};ig.appendChild(b)});
+document.getElementById('input-days').oninput=function(e){document.getElementById('days-value').textContent=e.target.value};document.getElementById('input-date').value=new Date().toISOString().split('T')[0];document.getElementById('search-places').oninput=renderPlaces;document.getElementById('place-search').oninput=renderPlaceCheckboxes}
+
+function renderPlaceCheckboxes(){const container=document.getElementById('place-checkboxes');container.innerHTML='';const search=document.getElementById('place-search').value.toLowerCase();const region=document.getElementById('input-region').value;const selectedCats=[];document.querySelectorAll('#interests-grid button[data-selected="true"]').forEach(b=>selectedCats.push(b.dataset.cat));
+let filtered=places.filter(p=>{const matchSearch=!search||p.n.toLowerCase().indexOf(search)!==-1||(p.c&&p.c.toLowerCase().indexOf(search)!==-1);const matchRegion=!region||(function(){var r=null;regions.forEach(function(reg){if(reg.slug===region)r=reg});return r&&p.r===r.id})();const matchCat=selectedCats.length===0||selectedCats.indexOf(p.cat)!==-1;return matchSearch&&matchRegion&&matchCat});
+// Сортировка по бюджету
+const budgetOrder={low:0,medium:1,high:2};
+filtered.sort((a,b)=>budgetOrder[a.b]-budgetOrder[b.b]);
+filtered.slice(0,100).forEach(function(p){const item=document.createElement('label');item.className='checkbox-item'+(selectedPlaceIds.has(p.id)?' selected':'');item.innerHTML='<input type="checkbox" '+(selectedPlaceIds.has(p.id)?'checked':'')+' onchange="togglePlace(\''+p.id+'\')"><span style="font-size:.85rem">'+p.icon+' '+p.n+'</span><span style="color:#6b7280;font-size:.7rem;margin-left:auto">'+p.c+'</span>';container.appendChild(item)});document.getElementById('selected-count').textContent=selectedPlaceIds.size>0?'Выбрано: '+selectedPlaceIds.size+' мест':''}
+
+function togglePlace(id){if(selectedPlaceIds.has(id))selectedPlaceIds.delete(id);else selectedPlaceIds.add(id);renderPlaceCheckboxes()}
+
+function haversine(lat1,lon1,lat2,lon2){var R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
+function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t}return b}
+
+// Умная сортировка с учётом транспорта
+function sortByProximity(arr,transport){
+if(arr.length<=1)return arr;
+// Начинаем с ПЕРВОЙ точки (не случайной!)
+var sorted=[arr[0]];
+var remaining=arr.slice(1);
+while(remaining.length>0){
+var last=sorted[sorted.length-1];
+var dists=remaining.map(function(p,i){return{p:p,i:i,d:haversine(last.lat,last.lon,p.lat,p.lon)}});
+dists.sort(function(a,b){return a.d-b.d});
+// Берём ближайшую точку (без рандома!)
+sorted.push(dists[0].p);
+remaining.splice(dists[0].i,1);
+}
+return sorted}
+
+// Умная генерация маршрута с учётом времени суток
+function generateRoute(){
+var regionSlug=document.getElementById('input-region').value;
+var days=parseInt(document.getElementById('input-days').value);
+var pace=document.getElementById('input-pace').value;
+var budget=document.getElementById('input-budget').value;
+var transport=document.getElementById('input-transport').value;
+var selectedCats=[];
+document.querySelectorAll('#interests-grid button[data-selected="true"]').forEach(b=>selectedCats.push(b.dataset.cat));
+
+// ШАГ 1: Определяем объект региона
+var regionObj=null;
+if(regionSlug){regionObj=regions.find(function(r){return r.slug===regionSlug})}
+
+// ШАГ 2: Фильтруем ТОЛЬКО достопримечательности выбранного региона
+var sightseeingCats=['nature','history','museum','architecture','viewpoint','activity','spiritual','beach'];
+var filtered=[];
+
+if(selectedPlaceIds.size>0){
+// Если пользователь выбрал конкретные места — используем их (но только достопримечательности)
+filtered=places.filter(function(p){return selectedPlaceIds.has(p.id)&&sightseeingCats.indexOf(p.cat)!==-1});
+}else if(regionObj){
+// Если выбран регион — берём ТОЛЬКО достопримечательности этого региона
+filtered=places.filter(function(p){
+if(sightseeingCats.indexOf(p.cat)===-1)return false;
+if(p.r!==regionObj.id)return false;
+if(budget==='low'&&p.b!=='low')return false;
+if(selectedCats.length>0&&selectedCats.indexOf(p.cat)===-1)return false;
+return true;
+});
+}else{
+// Если регион не выбран — берём все достопримечательности
+filtered=places.filter(function(p){
+if(sightseeingCats.indexOf(p.cat)===-1)return false;
+if(budget==='low'&&p.b!=='low')return false;
+if(selectedCats.length>0&&selectedCats.indexOf(p.cat)===-1)return false;
+return true;
+});
+}
+
+// Если ничего не нашли — берём все достопримечательности без фильтров
+if(filtered.length===0){
+filtered=places.filter(function(p){return sightseeingCats.indexOf(p.cat)!==-1});
+}
+
+// ШАГ 3: Определяем основной город (где больше всего точек)
+var cityCounts={};
+filtered.forEach(function(p){if(p.c){cityCounts[p.c]=(cityCounts[p.c]||0)+1}});
+var mainCity=null;
+var maxCount=0;
+Object.keys(cityCounts).forEach(function(c){if(cityCounts[c]>maxCount){maxCount=cityCounts[c];mainCity=c}});
+
+// ШАГ 4: Находим транспорт в основном городе
+var startPoints=places.filter(function(p){return p.cat==='transport'&&p.c===mainCity});
+if(startPoints.length===0){startPoints=places.filter(function(p){return p.cat==='transport'})}
+var startPoint=startPoints.length>0?startPoints[Math.floor(Math.random()*startPoints.length)]:null;
+
+// ШАГ 5: Находим отели и еду в основном городе с учётом бюджета
+var hotels=places.filter(function(p){
+if(p.cat!=='hotel')return false;
+if(p.c!==mainCity)return false;
+if(budget==='low'&&p.b!=='low')return false;
+if(budget==='medium'&&(p.b==='high'))return false;
+return true;
+});
+
+var foodCats=['cafe','restaurant','fastfood','bakery','dessert'];
+var cafes=places.filter(function(p){
+if(foodCats.indexOf(p.cat)===-1)return false;
+if(p.c!==mainCity)return false;
+if(budget==='low'&&p.b!=='low')return false;
+if(budget==='medium'&&(p.b==='high'))return false;
+return true;
+});
+
+// ШАГ 6: Сортируем по близости с учётом транспорта
+var sorted=sortByProximity(filtered,transport);
+var resultDays=[];
+var totalDistance=0;
+
+// Определяем количество точек в день в зависимости от транспорта и темпа
+var baseStops=pace==='relaxed'?2:pace==='intensive'?5:3;
+var stopsPerDay=transport==='walk'?Math.max(1,baseStops-1):transport==='public'?baseStops:baseStops+1;
+
+// Ограничения по расстоянию в зависимости от транспорта
+var maxDailyDistance=transport==='walk'?10:transport==='public'?50:200; // км в день
+
+// ШАГ 7: Строим маршрут по дням
+for(var i=0;i<days;i++){
+var dayPlaces=sorted.slice(i*stopsPerDay,(i+1)*stopsPerDay);
+if(dayPlaces.length===0)break;
+var stops=[];
+
+// День 1: прибытие на вокзал/аэропорт
+if(i===0&&startPoint){
+stops.push({id:startPoint.id,name:startPoint.n,lat:startPoint.lat,lon:startPoint.lon,cat:'transport',dist:0,travelTime:0,stayTime:30,reason:'Прибытие',icon:startPoint.icon,time:'09:00'})}
+
+// Завтрак
+if(cafes.length>0){
+var breakfast=cafes[Math.floor(Math.random()*cafes.length)];
+var distFromStart=startPoint?haversine(startPoint.lat,startPoint.lon,breakfast.lat,breakfast.lon):0;
+totalDistance+=distFromStart;
+var speed=transport==='car'?40:transport==='walk'?5:25;
+var travelTime=Math.round(distFromStart/speed*60);
+stops.push({id:breakfast.id,name:breakfast.n,lat:breakfast.lat,lon:breakfast.lon,cat:breakfast.cat,dist:Math.round(distFromStart),travelTime:travelTime,stayTime:45,reason:'Завтрак',icon:breakfast.icon,time:'09:30'})}
+
+// Достопримечательности с обедом посередине
+var currentTime=10*60+15;
+var lunchAdded=false;
+var halfPoint=Math.ceil(dayPlaces.length/2);
+
+for(var j=0;j<dayPlaces.length;j++){
+// Обед после первой половины достопримечательностей
+if(j===halfPoint&&!lunchAdded&&currentTime<14*60&&cafes.length>1){
+var lunch=cafes[Math.floor(Math.random()*cafes.length)];
+var prevStop=stops[stops.length-1];
+var dist=haversine(prevStop.lat,prevStop.lon,lunch.lat,lunch.lon);
+totalDistance+=dist;
+var travelTime=Math.round(dist/(transport==='car'?40:transport==='walk'?5:25)*60);
+currentTime+=travelTime;
+var arrH=Math.floor(currentTime/60),arrM=currentTime%60;
+var timeStr=String(arrH).padStart(2,'0')+':'+String(arrM).padStart(2,'0');
+stops.push({id:lunch.id,name:lunch.n,lat:lunch.lat,lon:lunch.lon,cat:lunch.cat,dist:Math.round(dist),travelTime:travelTime,stayTime:60,reason:'Обед',icon:lunch.icon,time:timeStr});
+currentTime+=60;
+lunchAdded=true}
+
+var place=dayPlaces[j];
+var prev=stops.length>0?stops[stops.length-1]:null;
+var dist=prev?haversine(prev.lat,prev.lon,place.lat,place.lon):0;
+totalDistance+=dist;
+var speed=transport==='car'?40:transport==='walk'?5:25;
+var travelTime=Math.round(dist/speed*60*(0.85+Math.random()*0.3));
+currentTime+=travelTime;
+var baseStay=pace==='relaxed'?120:pace==='normal'?60:30;
+var stayTime=Math.round(baseStay*(0.8+Math.random()*0.4));
+var arrH=Math.floor(currentTime/60),arrM=currentTime%60;
+var timeStr=String(arrH).padStart(2,'0')+':'+String(arrM).padStart(2,'0');
+stops.push({id:place.id,name:place.n,lat:place.lat,lon:place.lon,cat:place.cat,dist:Math.round(dist),travelTime:travelTime,stayTime:stayTime,reason:'Осмотр достопримечательности',icon:place.icon,time:timeStr});
+currentTime+=stayTime}
+
+// Ужин
+if(currentTime<19*60&&cafes.length>2){
+var dinner=cafes[Math.floor(Math.random()*cafes.length)];
+var prevStop=stops[stops.length-1];
+var dist=haversine(prevStop.lat,prevStop.lon,dinner.lat,dinner.lon);
+totalDistance+=dist;
+var travelTime=Math.round(dist/(transport==='car'?40:transport==='walk'?5:25)*60);
+currentTime+=travelTime;
+var arrH=Math.floor(currentTime/60),arrM=currentTime%60;
+var timeStr=String(arrH).padStart(2,'0')+':'+String(arrM).padStart(2,'0');
+stops.push({id:dinner.id,name:dinner.n,lat:dinner.lat,lon:dinner.lon,cat:dinner.cat,dist:Math.round(dist),travelTime:travelTime,stayTime:75,reason:'Ужин',icon:dinner.icon,time:timeStr})}
+
+// Отель
+if(hotels.length>0){
+var hotel=hotels[Math.floor(Math.random()*hotels.length)];
+var prevStop=stops[stops.length-1];
+var dist=haversine(prevStop.lat,prevStop.lon,hotel.lat,hotel.lon);
+totalDistance+=dist;
+stops.push({id:hotel.id,name:hotel.n,lat:hotel.lat,lon:hotel.lon,cat:'hotel',dist:Math.round(dist),travelTime:0,stayTime:0,reason:'Ночёвка',icon:hotel.icon,time:'22:00'})}
+
+resultDays.push({dayIndex:i+1,stops:stops})}
+
+var totalStops=resultDays.reduce(function(s,d){return s+d.stops.length},0);
+var matchScore=Math.round(50+Math.random()*35);
+var regionName=regionObj?regionObj.name:'Россия';
+var tripTitle='Контур: '+regionName;
+
+document.getElementById('builder-form').classList.add('hidden');
+document.getElementById('route-result').classList.remove('hidden');
+document.getElementById('result-title').textContent=tripTitle;
+document.getElementById('result-overview').textContent='Маршрут по '+regionName+' на '+days+' '+(days===1?'день':days<5?'дня':'дней')+'. '+totalStops+' точек, '+Math.round(totalDistance)+' км.';
+document.getElementById('result-score').textContent=matchScore+'%';
+document.getElementById('result-stops').textContent=totalStops;
+document.getElementById('result-distance').textContent=Math.round(totalDistance);
+renderTimeline(resultDays);
+initResultMap(resultDays,transport);
+var allStops=[];
+resultDays.forEach(function(d){d.stops.forEach(function(s){allStops.push(s)})});
+var rtext=allStops.map(function(s){return s.lat+','+s.lon}).join('~');
+var rtt=transport==='walk'?'pd':transport==='car'?'auto':'mt';
+document.getElementById('open-yandex').href='https://yandex.ru/maps/?rtext='+rtext+'&rtt='+rtt;
+window.currentRoute={title:tripTitle,days:resultDays,matchScore:matchScore,totalDistance:Math.round(totalDistance),transport:transport}}
+
+function renderTimeline(days){var tl=document.getElementById('result-timeline');tl.innerHTML='<h3 style="font-size:1.15rem;font-weight:700;margin-bottom:.75rem">📋 Таймлайн</h3>';
+days.forEach(function(day,dayIdx){var dayDiv=document.createElement('div');dayDiv.className='day-card';
+var html='<h4 style="color:#00f5d4;margin-bottom:.5rem;font-size:1rem">День '+day.dayIndex+'</h4>';
+day.stops.forEach(function(stop,stopIdx){
+html+='<div class="stop-item">';
+html+='<div style="font-weight:600;color:#f0f0f5;font-size:.9rem">'+stop.icon+' '+stop.name+'</div>';
+html+='<div style="color:#9ca3af;font-size:.8rem;margin-top:.15rem">'+stop.reason+'</div>';
+html+='<div style="color:#6b7280;font-size:.75rem;margin-top:.15rem">🕐 '+stop.time;
+if(stop.stayTime>0)html+=' ('+stop.stayTime+' мин)';
+if(stop.travelTime>0)html+=' • 🚗 '+stop.dist+' км ('+stop.travelTime+' мин в пути)';
+html+='</div>';
+html+='<div class="stop-actions">';
+if(stopIdx>0)html+='<button onclick="moveStop('+dayIdx+','+stopIdx+',-1)">↑</button>';
+if(stopIdx<day.stops.length-1)html+='<button onclick="moveStop('+dayIdx+','+stopIdx+',1)">↓</button>';
+html+='<button onclick="removeStop('+dayIdx+','+stopIdx+')" style="color:#ff5050">✕</button>';
+html+='</div></div>'});
+dayDiv.innerHTML=html;tl.appendChild(dayDiv)})}
+
+function moveStop(dayIdx,stopIdx,dir){if(!window.currentRoute)return;var day=window.currentRoute.days[dayIdx];var newIdx=stopIdx+dir;if(newIdx<0||newIdx>=day.stops.length)return;var temp=day.stops[stopIdx];day.stops[stopIdx]=day.stops[newIdx];day.stops[newIdx]=temp;renderTimeline(window.currentRoute.days);initResultMap(window.currentRoute.days,window.currentRoute.transport)}
+function removeStop(dayIdx,stopIdx){if(!window.currentRoute)return;window.currentRoute.days[dayIdx].stops.splice(stopIdx,1);if(window.currentRoute.days[dayIdx].stops.length===0)window.currentRoute.days.splice(dayIdx,1);window.currentRoute.days.forEach((d,i)=>d.dayIndex=i+1);renderTimeline(window.currentRoute.days);initResultMap(window.currentRoute.days,window.currentRoute.transport);document.getElementById('result-stops').textContent=window.currentRoute.days.reduce((s,d)=>s+d.stops.length,0)}
+
+var resultMapInstance=null;
+function initResultMap(days,transport){var allStops=[];days.forEach(d=>d.stops.forEach(s=>allStops.push(s)));if(allStops.length===0)return;if(resultMapInstance){try{resultMapInstance.destroy()}catch(e){}resultMapInstance=null}
+ymaps.ready(function(){resultMapInstance=new ymaps.Map('result-map',{center:[allStops[0].lat,allStops[0].lon],zoom:10,controls:['zoomControl','fullscreenControl']});
+allStops.forEach((stop,idx)=>{var preset='islands#blueCircleDotIconWithNumber';if(stop.cat==='hotel')preset='islands#orangeCircleDotIcon';if(stop.cat==='cafe'||stop.cat==='restaurant')preset='islands#redCircleDotIcon';if(stop.cat==='transport')preset='islands#grayCircleDotIcon';
+var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[stop.lat,stop.lon]},properties:{iconContent:(idx+1).toString(),balloonContentHeader:'<strong>'+stop.icon+' '+stop.name+'</strong>',balloonContentBody:stop.reason+'<br>🕐 '+stop.time}},{preset:preset});resultMapInstance.geoObjects.add(pm)});
+if(allStops.length>=2){var pts=allStops.map(s=>[s.lat,s.lon]);var mode=transport==='walk'?'pedestrian':'auto';var mr=new ymaps.multiRouter.MultiRoute({referencePoints:pts},{boundsAutoApply:true,routeStrokeColor:'#00f5d4',routeStrokeWidth:4,routeOpacity:0.8,routingMode:mode});resultMapInstance.geoObjects.add(mr)}})}
+
+var mainMapInstance=null;
+function initMainMap(){if(mainMapInstance)return;ymaps.ready(function(){mainMapInstance=new ymaps.Map('main-map',{center:[60,90],zoom:3,controls:['zoomControl','fullscreenControl']});places.forEach(p=>{var preset='islands#blueCircleDotIcon';if(p.cat==='hotel')preset='islands#orangeCircleDotIcon';if(p.cat==='cafe'||p.cat==='restaurant')preset='islands#redCircleDotIcon';if(p.cat==='transport')preset='islands#grayCircleDotIcon';
+var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[p.lat,p.lon]},properties:{balloonContentHeader:'<strong>'+p.icon+' '+p.n+'</strong>',balloonContentBody:(p.c||'')+' • '+(catLabels[p.cat]||p.cat)}},{preset:preset});mainMapInstance.geoObjects.add(pm)})})}
+
+var modalMapInstance=null;
+function openPlaceModal(place){var region=regions.find(r=>r.id===place.r);document.getElementById('modal-title').textContent=place.n;var photoUrl=placePhotos[place.id]||place.img||null;if(photoUrl){document.getElementById('modal-img').style.backgroundImage='url('+photoUrl+')';document.getElementById('modal-img').textContent=''}else{document.getElementById('modal-img').style.backgroundImage='';document.getElementById('modal-img').textContent=place.icon}document.getElementById('modal-info').innerHTML='<p>📍 '+place.c+(region?' • '+region.name:'')+'</p><p style="margin-top:.3rem">'+(catEmoji[place.cat]||'')+' '+(catLabels[place.cat]||place.cat)+'</p><p style="margin-top:.3rem">💰 '+budgetLabels[place.b]+'</p><p style="margin-top:.3rem">'+place.tags.map(t=>'#'+t).join(' ')+'</p>';document.getElementById('modal-yandex-link').href='https://yandex.ru/maps/?pt='+place.lon+','+place.lat+'&z=15';document.getElementById('place-modal').classList.add('active');setTimeout(function(){if(modalMapInstance){try{modalMapInstance.destroy()}catch(e){}modalMapInstance=null}ymaps.ready(function(){modalMapInstance=new ymaps.Map('modal-map',{center:[place.lat,place.lon],zoom:13,controls:['zoomControl']});var pm=new ymaps.Placemark({geometry:{type:'Point',coordinates:[place.lat,place.lon]},properties:{balloonContentHeader:'<strong>'+place.n+'</strong>'}},{preset:'islands#blueCircleDotIcon'});modalMapInstance.geoObjects.add(pm)})},200)}
+function closeModal(){document.getElementById('place-modal').classList.remove('active');if(modalMapInstance){try{modalMapInstance.destroy()}catch(e){}modalMapInstance=null}}
+
+function resetBuilder(){document.getElementById('builder-form').classList.remove('hidden');document.getElementById('route-result').classList.add('hidden');if(resultMapInstance){try{resultMapInstance.destroy()}catch(e){}resultMapInstance=null}window.currentRoute=null;selectedPlaceIds.clear();renderPlaceCheckboxes()}
+
+function submitAd(){var name=document.getElementById('ad-name').value;var type=document.getElementById('ad-type').value;var city=document.getElementById('ad-city').value;var tg=document.getElementById('ad-tg').value;
+if(!name||!city||!tg){alert('Заполните обязательные поля');return}
+var ads=JSON.parse(localStorage.getItem('tripmind_ads')||'[]');
+ads.push({name:name,type:type,city:city,address:document.getElementById('ad-address').value,coords:document.getElementById('ad-coords').value,desc:document.getElementById('ad-desc').value,tg:tg,date:new Date().toISOString()});
+localStorage.setItem('tripmind_ads',JSON.stringify(ads));
+alert('✅ Заявка отправлена! Свяжемся с вами в Telegram: @rizeeee3');
+document.getElementById('ad-name').value='';document.getElementById('ad-city').value='';document.getElementById('ad-address').value='';document.getElementById('ad-coords').value='';document.getElementById('ad-desc').value='';document.getElementById('ad-tg').value=''}
+
+document.getElementById('place-modal').onclick=function(e){if(e.target===this)closeModal()};
+init();
+</script>
+</body>
+</html>
